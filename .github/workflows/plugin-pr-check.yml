@@ -17,7 +17,7 @@ jobs:
       - name: Checkout PR
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0  # required to compare with origin/main
+          fetch-depth: 0
 
       - name: Set up Node.js
         uses: actions/setup-node@v3
@@ -35,7 +35,11 @@ jobs:
           PR_NUMBER: ${{ github.event.pull_request.number }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          COMMENT="### Plugin Validation Results\n\n"
+          # Initialize comment with HTML marker to allow updates
+          COMMENT="<!--PLUGIN_VALIDATION_COMMENT-->"
+          COMMENT+=$'\n'"### Plugin Validation Results"
+          COMMENT+=$'\n'
+
           FAILED=0
 
           # Get modified plugin directories
@@ -44,7 +48,7 @@ jobs:
           # Enforce single plugin per PR
           PLUGIN_COUNT=$(echo "$PLUGIN_DIRS" | wc -l)
           if [ "$PLUGIN_COUNT" -ne 1 ]; then
-            COMMENT+="❌ **Error:** PR must only modify one plugin. Detected $PLUGIN_COUNT plugins.\n"
+            COMMENT+=$'\n'"❌ **Error:** PR must only modify one plugin. Detected $PLUGIN_COUNT plugins."
             FAILED=1
           fi
 
@@ -53,20 +57,20 @@ jobs:
           for plugin in $PLUGIN_DIRS; do
             PLUGIN_JSON="plugins/$plugin/plugin.json"
             README="plugins/$plugin/README.md"
-            COMMENT+="- **$plugin**:\n"
+            COMMENT+=$'\n'"- **$plugin**:"
             PLUGIN_FAILED=0
 
             # Check plugin.json existence
             if [ ! -f "$PLUGIN_JSON" ]; then
               echo "::error file=$PLUGIN_JSON::plugin.json missing"
-              COMMENT+="  - ❌ plugin.json missing\n"
+              COMMENT+=$'\n'"  - ❌ plugin.json missing"
               PLUGIN_FAILED=1
             fi
 
             # Check README.md existence
             if [ ! -f "$README" ]; then
               echo "::error file=$README::README.md missing"
-              COMMENT+="  - ❌ README.md missing\n"
+              COMMENT+=$'\n'"  - ❌ README.md missing"
               PLUGIN_FAILED=1
             fi
 
@@ -74,7 +78,7 @@ jobs:
               # Validate JSON
               if ! cat "$PLUGIN_JSON" | node -e "try{JSON.parse(require('fs').readFileSync(0,'utf-8'));}catch(e){process.exit(1);}"; then
                 echo "::error file=$PLUGIN_JSON::Invalid JSON"
-                COMMENT+="  - ❌ Invalid JSON\n"
+                COMMENT+=$'\n'"  - ❌ Invalid JSON"
                 PLUGIN_FAILED=1
               fi
 
@@ -84,7 +88,7 @@ jobs:
               MAINTAINERS="${MAINTAINERS:-}"  # allow empty array
               if [[ "$PR_AUTHOR" != "$OWNER" ]] && [[ ! " $MAINTAINERS " =~ " $PR_AUTHOR " ]]; then
                 echo "::warning file=$PLUGIN_JSON::You are not the owner or a maintainer"
-                COMMENT+="  - ⚠️ You are not the owner or maintainer\n"
+                COMMENT+=$'\n'"  - ⚠️ You are not the owner or maintainer"
                 PLUGIN_FAILED=1
               fi
 
@@ -92,7 +96,7 @@ jobs:
               VERSION=$(jq -r '.version' "$PLUGIN_JSON")
               if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
                 echo "::warning file=$PLUGIN_JSON::Version is not semantic (X.Y.Z)"
-                COMMENT+="  - ⚠️ Version is not semantic (X.Y.Z)\n"
+                COMMENT+=$'\n'"  - ⚠️ Version is not semantic (X.Y.Z)"
               fi
 
               # Version bump check for updates
@@ -105,24 +109,21 @@ jobs:
                    (( NEW_MAJOR == OLD_MAJOR && NEW_MINOR < OLD_MINOR )) || \
                    (( NEW_MAJOR == OLD_MAJOR && NEW_MINOR == OLD_MINOR && NEW_PATCH <= OLD_PATCH )); then
                   echo "::error file=$PLUGIN_JSON::Version must be incremented from $OLD_VERSION (current on main)"
-                  COMMENT+="  - ❌ Version must be incremented from $OLD_VERSION\n"
+                  COMMENT+=$'\n'"  - ❌ Version must be incremented from $OLD_VERSION"
                   PLUGIN_FAILED=1
                 fi
               fi
             fi
 
             if [ "$PLUGIN_FAILED" -eq 0 ]; then
-              COMMENT+="  - ✅ Passed all checks\n"
+              COMMENT+=$'\n'"  - ✅ Passed all checks"
             else
               FAILED=1
             fi
-
-            COMMENT+=$'\n'
           done
 
           # Post or update single PR comment
           EXISTING_COMMENT_ID=$(gh pr view $PR_NUMBER --json comments --jq '.comments[] | select(.author.login=="github-actions[bot]") | select(.body | contains("<!--PLUGIN_VALIDATION_COMMENT-->")) | .id')
-          COMMENT="<!--PLUGIN_VALIDATION_COMMENT-->\n$COMMENT"
           if [ -n "$EXISTING_COMMENT_ID" ]; then
             gh pr comment edit $EXISTING_COMMENT_ID --body "$COMMENT"
           else
@@ -134,3 +135,4 @@ jobs:
         run: |
           if [ "$FAILED" -ne 0 ]; then
             exit 1
+          fi
