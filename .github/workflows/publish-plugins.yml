@@ -43,6 +43,9 @@ jobs:
           TMPDIR=$(mktemp -d)
           git clone --no-checkout "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$TMPDIR/plugins-branch"
           cd "$TMPDIR/plugins-branch"
+          # Set git user for all commits (including orphan branch)
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
           # Check if releases branch exists on remote
           if git ls-remote --exit-code --heads origin releases; then
             git checkout releases
