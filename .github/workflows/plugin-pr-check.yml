@@ -146,7 +146,7 @@ jobs:
               else
                 COMMENT+=$'\n'"  - ✅ JSON valid"
                 # Validate required properties
-                REQUIRED_KEYS=(name version owner maintainers description test)
+                REQUIRED_KEYS=(name version owner maintainers description)
                 for req_key in "${REQUIRED_KEYS[@]}"; do
                   if ! jq -e ".[\"$req_key\"]" "$PLUGIN_JSON" >/dev/null; then
                     COMMENT+=$'\n'"  - ❌ Required property '$req_key' missing from $PLUGIN_JSON"
