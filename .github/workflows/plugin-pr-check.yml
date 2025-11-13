@@ -16,35 +16,6 @@ on:
       - '.github/workflows/plugins.yml'
 
 jobs:
-  draft-notice:
-    if: ${{ github.event.pull_request.draft == true }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-
-      - name: Authenticate GH CLI
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh auth status
-
-      - name: Post draft notice
-        env:
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          COMMENT="<!--PLUGIN_VALIDATION_DRAFT_NOTICE-->"
-          COMMENT+=$'\n'"⚠️ This PR is currently a draft. Plugin validation will run once the PR is marked ready for review."
-          EXISTING_COMMENT_ID=$(gh pr view $PR_NUMBER --json comments --jq '.comments[] | select(.author.login=="github-actions[bot]") | select(.body | contains("<!--PLUGIN_VALIDATION_DRAFT_NOTICE-->")) | .id')
-          if [ -n "$EXISTING_COMMENT_ID" ]; then
-            gh pr comment edit $EXISTING_COMMENT_ID --body "$COMMENT"
-          else
-            gh pr comment $PR_NUMBER --body "$COMMENT"
-          fi
-
   validate-and-comment:
     runs-on: ubuntu-latest
     steps:
@@ -54,10 +25,11 @@ jobs:
           echo "❌ PR is a draft — validation cannot run on draft PRs"
           exit 1
 
-      - name: Checkout PR
+      - name: Checkout PR with full history
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.ref }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v3
@@ -83,7 +55,7 @@ jobs:
           PR_AUTHOR="${{ github.actor }}"
 
           # Get modified plugin directories
-          PLUGIN_DIRS=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep 'plugins/' | cut -d '/' -f2 | sort -u | uniq)
+          PLUGIN_DIRS=$(git diff --name-only origin/main ${{ github.sha }} | grep 'plugins/' | cut -d '/' -f2 | sort -u | uniq)
 
           # Enforce single plugin per PR
           PLUGIN_COUNT=$(echo "$PLUGIN_DIRS" | wc -l)
