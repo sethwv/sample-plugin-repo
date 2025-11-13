@@ -151,7 +151,6 @@ jobs:
                   if ! jq -e ".[\"$req_key\"]" "$PLUGIN_JSON" >/dev/null; then
                     COMMENT+=$'\n'"  - ❌ Required property '$req_key' missing from $PLUGIN_JSON"
                     PLUGIN_FAILED=1
-                    FAILED=1
                   fi
                 done
                 # Build table header and row for plugin.json fields
@@ -241,6 +240,8 @@ jobs:
       - name: Fail workflow if any critical errors
         if: ${{ always() }}
         run: |
+          # Ensure FAILED is always an integer (default 0)
+          FAILED=${FAILED:-0}
           if [ "$FAILED" -ne 0 ]; then
             exit 1
           fi
