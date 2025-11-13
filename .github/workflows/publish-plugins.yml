@@ -57,7 +57,8 @@ jobs:
           fi
           # Remove old artifacts
           rm -rf releases manifest.json README.md
-          # Copy source files from main branch for build
+          # Fetch full main history and copy source files from main branch for build
+          git fetch origin main
           git checkout origin/main -- plugins
           # Generate releases zips in subfolders, with latest and versioned zips
           mkdir -p releases
@@ -81,7 +82,7 @@ jobs:
           for plugin_dir in plugins/*/; do
             plugin_file="$plugin_dir/plugin.json"
             if [ -f "$plugin_file" ]; then
-              DATE=$(git log -1 --format=%cI -- "$plugin_dir")
+              DATE=$(git log -1 --format=%cI origin/main -- "$plugin_dir")
               PLUGIN_JSON=$(jq --arg date "$DATE" '. + {date: $date}' "$plugin_file")
               if [ "$FIRST" = true ]; then
                 FIRST=false
@@ -107,7 +108,7 @@ jobs:
               VERSION=$(jq -r '.version' "$PLUGIN_JSON")
               OWNER=$(jq -r '.owner' "$PLUGIN_JSON")
               MAINTAINERS=$(jq -r '[.maintainers[]?] | join(", ")' "$PLUGIN_JSON")
-              DATE=$(git log -1 --format=%cI -- "$plugin_dir")
+              DATE=$(git log -1 --format=%cI origin/main -- "$plugin_dir")
               ZIP_URL="https://github.com/${GITHUB_REPOSITORY}/raw/${BRANCH}/releases/${NAME}/${NAME}-latest.zip"
               echo "| $NAME | $VERSION | $OWNER | $MAINTAINERS | $DATE | [ZIP]($ZIP_URL) |" >> $MD_FILE
             fi
