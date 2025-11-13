@@ -43,11 +43,20 @@ jobs:
           TMPDIR=$(mktemp -d)
           git clone . "$TMPDIR/fullrepo"
           cd "$TMPDIR/fullrepo"
-          # Generate releases zips
+          # Generate releases zips in subfolders, with latest and versioned zips
           mkdir -p releases
           for plugin_dir in plugins/*/; do
             plugin_name=$(basename "$plugin_dir")
-            zip -r "releases/$plugin_name.zip" "$plugin_dir"
+            version=$(jq -r '.version' "$plugin_dir/plugin.json")
+            mkdir -p "releases/$plugin_name"
+            zip -r "releases/$plugin_name/${plugin_name}-${version}.zip" "$plugin_dir"
+            cp "releases/$plugin_name/${plugin_name}-${version}.zip" "releases/$plugin_name/${plugin_name}-latest.zip"
+          done
+          # Keep only the 10 most recent version-specific zips for each plugin
+          for plugin_dir in plugins/*/; do
+            plugin_name=$(basename "$plugin_dir")
+            zip_dir="releases/$plugin_name"
+            ls -1t "$zip_dir"/${plugin_name}-*.zip 2>/dev/null | grep -v "${plugin_name}-latest.zip" | awk 'NR>10' | xargs -r rm -f
           done
           # Generate manifest.json
           MANIFEST="manifest.json"
@@ -73,8 +82,8 @@ jobs:
           BRANCH="plugins"
           echo "# Plugin List" > $MD_FILE
           echo "" >> $MD_FILE
-          echo "| Name | Version | Owner | Maintainers | Date | ZIP |" >> $MD_FILE
-          echo "|------|--------|-------|------------|------|-----|" >> $MD_FILE
+          echo "| Name | Version | Owner | Maintainers | Update Date | ZIP |" >> $MD_FILE
+          echo "|------|--------|-------|------------|-------------|-----|" >> $MD_FILE
           for plugin_dir in plugins/*/; do
             PLUGIN_JSON="$plugin_dir/plugin.json"
             if [ -f "$PLUGIN_JSON" ]; then
@@ -83,7 +92,7 @@ jobs:
               OWNER=$(jq -r '.owner' "$PLUGIN_JSON")
               MAINTAINERS=$(jq -r '[.maintainers[]?] | join(", ")' "$PLUGIN_JSON")
               DATE=$(git log -1 --format=%cI -- "$plugin_dir")
-              ZIP_URL="https://github.com/${GITHUB_REPOSITORY}/raw/${BRANCH}/releases/$(basename $plugin_dir).zip"
+              ZIP_URL="https://github.com/${GITHUB_REPOSITORY}/raw/${BRANCH}/releases/${NAME}/${NAME}-latest.zip"
               echo "| $NAME | $VERSION | $OWNER | $MAINTAINERS | $DATE | [ZIP]($ZIP_URL) |" >> $MD_FILE
             fi
           done
