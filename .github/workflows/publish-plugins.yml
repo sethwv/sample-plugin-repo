@@ -39,14 +39,10 @@ jobs:
           set -ex
           git config --local user.name "github-actions[bot]"
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          # Create orphan plugins branch and clean
-          git checkout --orphan plugins
-          git reset --hard
-          find . -mindepth 1 -maxdepth 1 ! -name '.git' -exec rm -rf {} +
-          # Make initial empty commit so we can check out files from main
-          git commit --allow-empty -m "Initial empty commit on plugins branch"
-          # Restore plugins directory from main branch
-          git checkout main -- plugins
+          # Clone the repo to a temp directory for artifact generation
+          TMPDIR=$(mktemp -d)
+          git clone . "$TMPDIR/fullrepo"
+          cd "$TMPDIR/fullrepo"
           # Generate releases zips
           mkdir -p releases
           for plugin_dir in plugins/*/; do
@@ -60,7 +56,7 @@ jobs:
           for plugin_dir in plugins/*/; do
             plugin_file="$plugin_dir/plugin.json"
             if [ -f "$plugin_file" ]; then
-              DATE=$(git log -1 --format=%cI -- "$plugin_file")
+              DATE=$(git log -1 --format=%cI -- "$plugin_dir")
               PLUGIN_JSON=$(jq --arg date "$DATE" '. + {date: $date}' "$plugin_file")
               if [ "$FIRST" = true ]; then
                 FIRST=false
@@ -86,24 +82,31 @@ jobs:
               VERSION=$(jq -r '.version' "$PLUGIN_JSON")
               OWNER=$(jq -r '.owner' "$PLUGIN_JSON")
               MAINTAINERS=$(jq -r '[.maintainers[]?] | join(", ")' "$PLUGIN_JSON")
-              # Use last commit date of the plugin folder
               DATE=$(git log -1 --format=%cI -- "$plugin_dir")
               ZIP_URL="https://github.com/${GITHUB_REPOSITORY}/raw/${BRANCH}/releases/$(basename $plugin_dir).zip"
               echo "| $NAME | $VERSION | $OWNER | $MAINTAINERS | $DATE | [ZIP]($ZIP_URL) |" >> $MD_FILE
             fi
           done
-          # Show contents before removing plugins/
-          echo "Before removing plugins/:"
-          ls -la
-          # Remove plugins/ folder before committing (ignore error if already removed)
-          if [ -d ./plugins ]; then
-            rm -rf ./plugins
+          # Copy artifacts back to workspace root
+          cp -r releases "$GITHUB_WORKSPACE"/
+          cp manifest.json "$GITHUB_WORKSPACE"/
+          cp README.md "$GITHUB_WORKSPACE"/
+          cd "$GITHUB_WORKSPACE"
+          # Switch to plugins branch (create if it doesn't exist)
+          if git show-ref --quiet refs/heads/plugins; then
+            git checkout plugins
+          else
+            git checkout -b plugins
           fi
-          # Remove plugins/ from git index if present
-          git rm -rf --cached plugins || true
-          echo "After removing plugins/:"
-          ls -la
-          # Add and commit only to plugins branch
+          # Pull latest from remote if exists
+          git pull origin plugins || true
+          # Remove old artifacts
+          rm -rf releases manifest.json README.md
+          # Copy new artifacts from temp build
+          cp -r "$TMPDIR/fullrepo/releases" .
+          cp "$TMPDIR/fullrepo/manifest.json" .
+          cp "$TMPDIR/fullrepo/README.md" .
+          # Add, commit, and push only changes
           git add releases manifest.json README.md
-          git commit -m "Publish plugin zips, manifest, and README.md [skip ci]"
-          git push --force "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" plugins
+          git diff --cached --quiet || git commit -m "Publish plugin zips, manifest, and README.md [skip ci]"
+          git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" plugins
