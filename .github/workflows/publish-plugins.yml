@@ -69,21 +69,35 @@ jobs:
             zip -r "releases/$plugin_name/${plugin_name}-${version}.zip" "$plugin_dir"
             cp "releases/$plugin_name/${plugin_name}-${version}.zip" "releases/$plugin_name/${plugin_name}-latest.zip"
           done
-          # Keep only the 10 most recent version-specific zips for each plugin
+          # Keep only the 10 most recent versioned zips (excluding latest) for each plugin
           for plugin_dir in plugins/*/; do
             plugin_name=$(basename "$plugin_dir")
             zip_dir="releases/$plugin_name"
             ls -1t "$zip_dir"/${plugin_name}-*.zip 2>/dev/null | grep -v "${plugin_name}-latest.zip" | awk 'NR>10' | xargs -r rm -f
           done
-          # Generate manifest.json
+          # Generate manifest.json with links to latest and most recent versioned zip
           MANIFEST="manifest.json"
           echo '{ "plugins": [' > tmp_manifest.json
           FIRST=true
           for plugin_dir in plugins/*/; do
             plugin_file="$plugin_dir/plugin.json"
             if [ -f "$plugin_file" ]; then
+              NAME=$(jq -r '.name' "$plugin_file")
               DATE=$(git log -1 --format=%cI origin/main -- "$plugin_dir")
-              PLUGIN_JSON=$(jq --arg date "$DATE" '. + {date: $date}' "$plugin_file")
+              # Find all versioned zips (excluding latest)
+              versioned_zips_list=$(ls -1 releases/$NAME/${NAME}-*.zip 2>/dev/null | grep -v latest | xargs -n1 basename)
+              latest_zip_url="https://github.com/${GITHUB_REPOSITORY}/raw/releases/releases/${NAME}/${NAME}-latest.zip"
+              versioned_zips_json="[]"
+              for zipfile in $versioned_zips_list; do
+                url="https://github.com/${GITHUB_REPOSITORY}/raw/releases/releases/${NAME}/$zipfile"
+                versioned_zips_json=$(jq --arg url "$url" '. + [$url]' <<< "$versioned_zips_json")
+              done
+              # Most recent versioned zip URL (if any)
+              versioned_zip_url=""
+              if [ -n "$versioned_zips_list" ]; then
+                versioned_zip_url=$(echo "$versioned_zips_json" | jq -r '.[0]')
+              fi
+              PLUGIN_JSON=$(jq --arg date "$DATE" --arg latest "$latest_zip_url" --arg versioned "$versioned_zip_url" --argjson versioned_zips "$versioned_zips_json" '. + {date: $date, latest_zip_url: $latest, versioned_zip_url: $versioned, versioned_zips: $versioned_zips}' "$plugin_file")
               if [ "$FIRST" = true ]; then
                 FIRST=false
               else
