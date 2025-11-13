@@ -199,12 +199,11 @@ jobs:
               fi
             fi
 
-            # If table header/row were built, insert the table above the results
+            # If table header/row were built, store the table for later appending at the bottom
             if [ -n "$TABLE_HEADER" ] && [ -n "$TABLE_ROW" ]; then
-              COMMENT+=$'\n'"#### plugin.json contents for $plugin"
-              COMMENT+=$'\n'"$TABLE_HEADER"
-              COMMENT+=$'\n'"$TABLE_SEPARATOR"
-              COMMENT+=$'\n'"$TABLE_ROW"
+              PLUGIN_TABLES+=$'\n'"$TABLE_HEADER"
+              PLUGIN_TABLES+=$'\n'"$TABLE_SEPARATOR"
+              PLUGIN_TABLES+=$'\n'"$TABLE_ROW"
             fi
 
             if [ "$PLUGIN_FAILED" -eq 0 ]; then
@@ -219,8 +218,13 @@ jobs:
             COMMENT+=$'\n\n'"🎉 **All validation checks passed for this PR!**"
           fi
 
+          # Append plugin.json table(s) right after the last plugin's results and global summary
+          if [ -n "$PLUGIN_TABLES" ]; then
+            COMMENT+=$'\n'"$PLUGIN_TABLES"
+          fi
+
           # Post or update single PR comment
-          EXISTING_COMMENT_ID=$(gh pr view $PR_NUMBER --json comments --jq '.comments[] | select(.author.login=="github-actions[bot]") | select(.body | contains("<!--PLUGIN_VALIDATION_COMMENT-->")) | .id')
+          EXISTING_COMMENT_ID=$(gh pr view $PR_NUMBER --json comments --jq '.comments[] | select(.author.login=="github-actions[bot]") | select(.body | contains("<!--PLUGIN_VALIDATION_COMMENT-->") ) | .id')
           if [ -n "$EXISTING_COMMENT_ID" ]; then
             gh pr comment edit $EXISTING_COMMENT_ID --body "$COMMENT"
           else
