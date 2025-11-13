@@ -1,0 +1,7 @@
+{
+  "name": "cool-new-plugin",
+  "version": "0.0.1",
+  "owner": "sethwv",
+  "maintainers": ["sethwv-alt"],
+  "description": "A cool description"
+}
