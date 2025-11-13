@@ -15,8 +15,10 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout main
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
       - name: Create releases folder
         run: mkdir -p releases
@@ -28,7 +30,7 @@ jobs:
             zip -r "releases/$plugin_name.zip" "$plugin_dir"
           done
 
-      - name: Generate manifest.json with PR/commit dates
+      - name: Generate manifest.json with commit dates
         run: |
           MANIFEST="manifest.json"
           echo '{ "plugins": [' > tmp_manifest.json
@@ -36,6 +38,7 @@ jobs:
           for plugin_dir in plugins/*/; do
             plugin_file="$plugin_dir/plugin.json"
             if [ -f "$plugin_file" ]; then
+              # Use last commit date of plugin.json for manifest
               DATE=$(git log -1 --format=%cI -- "$plugin_file")
               PLUGIN_JSON=$(jq --arg date "$DATE" '. + {date: $date}' "$plugin_file")
               if [ "$FIRST" = true ]; then

@@ -8,6 +8,7 @@ on:
   pull_request:
     paths:
       - 'plugins/**'
+      - '.github/workflows/plugins.yml'
 
 jobs:
   validate-and-comment:
@@ -15,15 +16,24 @@ jobs:
     steps:
       - name: Checkout PR
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # required to compare with origin/main
 
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '20'
 
-      - name: Validate single plugin and build PR comment
+      - name: Authenticate GH CLI
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "$GH_TOKEN" | gh auth login --with-token
+
+      - name: Validate plugin(s) and build PR comment
         env:
           PR_NUMBER: ${{ github.event.pull_request.number }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           COMMENT="### Plugin Validation Results\n\n"
           FAILED=0
@@ -60,16 +70,15 @@ jobs:
               PLUGIN_FAILED=1
             fi
 
-            # Only continue JSON/ownership/version checks if plugin.json exists
             if [ -f "$PLUGIN_JSON" ]; then
-              # Validate JSON syntax
+              # Validate JSON
               if ! cat "$PLUGIN_JSON" | node -e "try{JSON.parse(require('fs').readFileSync(0,'utf-8'));}catch(e){process.exit(1);}"; then
                 echo "::error file=$PLUGIN_JSON::Invalid JSON"
                 COMMENT+="  - ❌ Invalid JSON\n"
                 PLUGIN_FAILED=1
               fi
 
-              # Check owner and maintainers
+              # Owner / maintainers check
               OWNER=$(jq -r '.owner' "$PLUGIN_JSON")
               MAINTAINERS=$(jq -r '[.maintainers[]?] | join(" ")' "$PLUGIN_JSON")
               MAINTAINERS="${MAINTAINERS:-}"  # allow empty array
@@ -79,15 +88,29 @@ jobs:
                 PLUGIN_FAILED=1
               fi
 
-              # Version check
+              # Version semantic check
               VERSION=$(jq -r '.version' "$PLUGIN_JSON")
               if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
                 echo "::warning file=$PLUGIN_JSON::Version is not semantic (X.Y.Z)"
                 COMMENT+="  - ⚠️ Version is not semantic (X.Y.Z)\n"
               fi
+
+              # Version bump check for updates
+              if git show origin/main:"$PLUGIN_JSON" > /dev/null 2>&1; then
+                OLD_VERSION=$(git show origin/main:"$PLUGIN_JSON" | jq -r '.version')
+                IFS='.' read -r OLD_MAJOR OLD_MINOR OLD_PATCH <<< "$OLD_VERSION"
+                IFS='.' read -r NEW_MAJOR NEW_MINOR NEW_PATCH <<< "$VERSION"
+
+                if (( NEW_MAJOR < OLD_MAJOR )) || \
+                   (( NEW_MAJOR == OLD_MAJOR && NEW_MINOR < OLD_MINOR )) || \
+                   (( NEW_MAJOR == OLD_MAJOR && NEW_MINOR == OLD_MINOR && NEW_PATCH <= OLD_PATCH )); then
+                  echo "::error file=$PLUGIN_JSON::Version must be incremented from $OLD_VERSION (current on main)"
+                  COMMENT+="  - ❌ Version must be incremented from $OLD_VERSION\n"
+                  PLUGIN_FAILED=1
+                fi
+              fi
             fi
 
-            # Success note if no failures for this plugin
             if [ "$PLUGIN_FAILED" -eq 0 ]; then
               COMMENT+="  - ✅ Passed all checks\n"
             else
@@ -97,8 +120,14 @@ jobs:
             COMMENT+=$'\n'
           done
 
-          # Post comment
-          gh pr comment $PR_NUMBER --body "$COMMENT"
+          # Post or update single PR comment
+          EXISTING_COMMENT_ID=$(gh pr view $PR_NUMBER --json comments --jq '.comments[] | select(.author.login=="github-actions[bot]") | select(.body | contains("<!--PLUGIN_VALIDATION_COMMENT-->")) | .id')
+          COMMENT="<!--PLUGIN_VALIDATION_COMMENT-->\n$COMMENT"
+          if [ -n "$EXISTING_COMMENT_ID" ]; then
+            gh pr comment edit $EXISTING_COMMENT_ID --body "$COMMENT"
+          else
+            gh pr comment $PR_NUMBER --body "$COMMENT"
+          fi
 
       - name: Fail workflow if any critical errors
         if: ${{ always() }}
