@@ -32,7 +32,7 @@ jobs:
 
       # The above steps are replaced by the next step
 
-      - name: Publish to plugins branch (orphan, clean, generate, commit)
+      - name: Publish to releases branch (orphan, clean, generate, commit)
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -43,14 +43,14 @@ jobs:
           TMPDIR=$(mktemp -d)
           git clone --no-checkout "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$TMPDIR/plugins-branch"
           cd "$TMPDIR/plugins-branch"
-          # Check if plugins branch exists on remote
-          if git ls-remote --exit-code --heads origin plugins; then
-            git checkout plugins
-            git pull origin plugins || true
+          # Check if releases branch exists on remote
+          if git ls-remote --exit-code --heads origin releases; then
+            git checkout releases
+            git pull origin releases || true
           else
-            git checkout --orphan plugins
+            git checkout --orphan releases
             git rm -rf .
-            git commit --allow-empty -m "Initial empty commit on plugins branch"
+            git commit --allow-empty -m "Initial empty commit on releases branch"
           fi
           # Remove old artifacts
           rm -rf releases manifest.json README.md
@@ -92,7 +92,7 @@ jobs:
           mv tmp_manifest.json $MANIFEST
           # Generate README.md
           MD_FILE="README.md"
-          BRANCH="plugins"
+          BRANCH="releases"
           echo "# Plugin List" > $MD_FILE
           echo "" >> $MD_FILE
           echo "| Name | Version | Owner | Maintainers | Update Date | ZIP |" >> $MD_FILE
@@ -118,4 +118,4 @@ jobs:
           # Add, commit, and push only changes
           git add releases manifest.json README.md
           git diff --cached --quiet || git commit -m "Publish plugin zips, manifest, and README.md [skip ci]"
-          git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" plugins
+          git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" releases
