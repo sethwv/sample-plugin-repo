@@ -101,6 +101,8 @@ jobs:
           if [ -d ./plugins ]; then
             rm -rf ./plugins
           fi
+          # Remove plugins/ from git index if present
+          git rm -rf --cached plugins || true
           echo "After removing plugins/:"
           ls -la
           # Add and commit only to plugins branch
