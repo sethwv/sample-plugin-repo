@@ -234,14 +234,32 @@ jobs:
             COMMENT+=$'\n\n### Plugin Information\n'$'\n'"$PLUGIN_TABLES"
           fi
 
-          # Post new PR comment
-          gh pr comment $PR_NUMBER --body "$COMMENT"
+
+          # Write comment and FAILED status to files for later use
+          echo "$COMMENT" > pr_comment.txt
+          echo "$FAILED" > pr_failed.txt
+
+      - name: Post PR comment
+        if: always()
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ -f pr_comment.txt ]; then
+            gh pr comment $PR_NUMBER --body "$(cat pr_comment.txt)"
+          fi
+        continue-on-error: true
 
       - name: Fail workflow if any critical errors
-        if: ${{ always() }}
+        if: always()
         run: |
-          # Ensure FAILED is always an integer (default 0)
-          FAILED=${FAILED:-0}
+          # Read FAILED status from file
+          if [ -f pr_failed.txt ]; then
+            FAILED=$(cat pr_failed.txt)
+          else
+            FAILED=0
+          fi
           if [ "$FAILED" -ne 0 ]; then
+            echo "::error::Plugin validation failed. See PR comment for details."
             exit 1
           fi
