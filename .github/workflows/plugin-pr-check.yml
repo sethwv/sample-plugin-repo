@@ -218,7 +218,7 @@ jobs:
             fi
 
             if [ "$PLUGIN_FAILED" -eq 0 ]; then
-              COMMENT+=$'\n'"  - ✅ All checks passed for $plugin"
+              # COMMENT+=$'\n'"  - ✅ All checks passed for $plugin"
             else
               FAILED=1
             fi
