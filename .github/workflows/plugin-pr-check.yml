@@ -16,6 +16,26 @@ on:
       - '.github/workflows/plugins.yml'
 
 jobs:
+  check-workflow-consistency:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout current branch
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Download workflow from main branch
+        run: |
+          mkdir -p /tmp/workflow-compare
+          git show origin/main:.github/workflows/plugin-pr-check.yml > /tmp/workflow-compare/plugin-pr-check.main.yml
+
+      - name: Compare workflow to main branch
+        run: |
+          diff -u /tmp/workflow-compare/plugin-pr-check.main.yml .github/workflows/plugin-pr-check.yml > /tmp/workflow-compare/diff.txt || {
+            echo "::error::Workflow file differs from main branch. See /tmp/workflow-compare/diff.txt for details.";
+            exit 1;
+          }
+
   draft-notice:
     if: ${{ github.event.pull_request.draft == true }}
     runs-on: ubuntu-latest
@@ -83,6 +103,26 @@ jobs:
 
           FAILED=0
           PR_AUTHOR="${{ github.actor }}"
+          REPO_OWNER="${{ github.repository_owner }}"
+          REPO_NAME=$(echo "${{ github.repository }}" | cut -d'/' -f2)
+
+          # Check if PR author is a repository maintainer (has write or admin access)
+          IS_REPO_MAINTAINER=0
+          PERMISSION=$(gh api repos/$REPO_OWNER/$REPO_NAME/collaborators/$PR_AUTHOR/permission --jq .permission)
+          if [[ "$PERMISSION" == "admin" || "$PERMISSION" == "write" ]]; then
+            IS_REPO_MAINTAINER=1
+          fi
+
+            # Check for workflow diff from consistency check job
+            if [ -f /tmp/workflow-compare/diff.txt ]; then
+              COMMENT+=$'\n'"❌ **Error:** Workflow file differs from main branch."
+              COMMENT+=$'\n'"<details><summary>Show diff</summary>"
+              COMMENT+=$'\n'"\n\`\`\`diff"
+              COMMENT+=$(cat /tmp/workflow-compare/diff.txt)
+              COMMENT+=$'\n'"\`\`\`"
+              COMMENT+=$'\n'"</details>"
+              FAILED=1
+            fi
 
           # Compute merge base relative to the fully fetched base branch
           MERGE_BASE=$(git merge-base origin/base HEAD)
@@ -135,11 +175,11 @@ jobs:
               MAINTAINERS=$(jq -r '[.maintainers[]?] | join(" ")' "$PLUGIN_JSON")
               MAINTAINERS="${MAINTAINERS:-}"
 
-              if [[ "$PR_AUTHOR" != "$OWNER" ]] && [[ ! " $MAINTAINERS " =~ " $PR_AUTHOR " ]]; then
-                COMMENT+=$'\n'"  - ⚠️ You are not the owner or a maintainer"
+              if [[ "$PR_AUTHOR" != "$OWNER" ]] && [[ ! " $MAINTAINERS " =~ " $PR_AUTHOR " ]] && [[ "$IS_REPO_MAINTAINER" -ne 1 ]]; then
+                COMMENT+=$'\n'"  - ⚠️ You are not the owner, a plugin maintainer, or a repository maintainer"
                 PLUGIN_FAILED=1
               else
-                COMMENT+=$'\n'"  - ✅ Owner/maintainer check passed"
+                COMMENT+=$'\n'"  - ✅ Owner/maintainer/repo maintainer check passed"
               fi
 
               VERSION=$(jq -r '.version' "$PLUGIN_JSON")
