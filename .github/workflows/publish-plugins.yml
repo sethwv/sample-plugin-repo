@@ -95,13 +95,15 @@ jobs:
           # Switch to plugins branch (create if it doesn't exist)
           if git show-ref --quiet refs/heads/plugins; then
             git checkout plugins
+            git pull origin plugins || true
+            # Remove old artifacts
+            rm -rf releases manifest.json README.md
           else
-            git checkout -b plugins
+            git checkout --orphan plugins
+            git reset --hard
+            find . -mindepth 1 -maxdepth 1 ! -name '.git' -exec rm -rf {} +
+            git commit --allow-empty -m "Initial empty commit on plugins branch"
           fi
-          # Pull latest from remote if exists
-          git pull origin plugins || true
-          # Remove old artifacts
-          rm -rf releases manifest.json README.md
           # Copy new artifacts from temp build
           cp -r "$TMPDIR/fullrepo/releases" .
           cp "$TMPDIR/fullrepo/manifest.json" .
