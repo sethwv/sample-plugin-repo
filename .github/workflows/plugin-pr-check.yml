@@ -84,11 +84,16 @@ jobs:
           FAILED=0
           PR_AUTHOR="${{ github.actor }}"
 
-          # Get modified plugin directories robustly
+          # Detect modified plugins
           PLUGIN_DIRS=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.sha }} \
             | grep '^plugins/' | cut -d '/' -f2 | sort -u | uniq)
 
-          echo "Modified plugin directories detected: $PLUGIN_DIRS"
+          # Fallback: if diff is empty, consider all directories in plugins/
+          if [ -z "$PLUGIN_DIRS" ]; then
+            PLUGIN_DIRS=$(find plugins -maxdepth 1 -mindepth 1 -type d | sed 's|plugins/||')
+          fi
+
+          echo "Plugins to validate: $PLUGIN_DIRS"
 
           # Enforce single plugin per PR
           PLUGIN_COUNT=$(echo "$PLUGIN_DIRS" | wc -l)
