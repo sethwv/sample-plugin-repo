@@ -161,7 +161,7 @@ jobs:
                   TABLE_HEADER+=" $key |"
                   # If the value is an array of strings, join as comma-separated
                   value=$(jq -r \
-                    ".[\"$key\"] | if type==\"array\" and (map(type) | all(. == \"string\")) then join(", ") \
+                    ".[\"$key\"] | if type==\"array\" and (map(type) | all(. == \"string\")) then join(\", \") \
                     elif type==\"array\" or type==\"object\" then @json else . end" "$PLUGIN_JSON")
                   TABLE_ROW+=" $value |"
                 done
