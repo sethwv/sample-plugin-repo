@@ -9,7 +9,7 @@ on:
       - main
     paths:
       - 'plugins/**'
-      - '.github/workflows/plugins.yml'
+      - '.github/workflows/publish-plugins.yml'
 
 jobs:
   publish:
