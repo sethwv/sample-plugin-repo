@@ -35,12 +35,12 @@ jobs:
           PR_NUMBER: ${{ github.event.pull_request.number }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Initialize comment with HTML marker to allow updates
           COMMENT="<!--PLUGIN_VALIDATION_COMMENT-->"
           COMMENT+=$'\n'"### Plugin Validation Results"
           COMMENT+=$'\n'
 
           FAILED=0
+          PR_AUTHOR="${{ github.actor }}"
 
           # Get modified plugin directories
           PLUGIN_DIRS=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep 'plugins/' | cut -d '/' -f2 | sort -u | uniq)
@@ -52,8 +52,6 @@ jobs:
             FAILED=1
           fi
 
-          PR_AUTHOR="${{ github.actor }}"
-
           for plugin in $PLUGIN_DIRS; do
             PLUGIN_JSON="plugins/$plugin/plugin.json"
             README="plugins/$plugin/README.md"
@@ -62,41 +60,45 @@ jobs:
 
             # Check plugin.json existence
             if [ ! -f "$PLUGIN_JSON" ]; then
-              echo "::error file=$PLUGIN_JSON::plugin.json missing"
               COMMENT+=$'\n'"  - ❌ plugin.json missing"
               PLUGIN_FAILED=1
+            else
+              COMMENT+=$'\n'"  - ✅ plugin.json exists"
             fi
 
             # Check README.md existence
             if [ ! -f "$README" ]; then
-              echo "::error file=$README::README.md missing"
               COMMENT+=$'\n'"  - ❌ README.md missing"
               PLUGIN_FAILED=1
+            else
+              COMMENT+=$'\n'"  - ✅ README.md exists"
             fi
 
+            # Validate JSON and extract fields
             if [ -f "$PLUGIN_JSON" ]; then
-              # Validate JSON
               if ! cat "$PLUGIN_JSON" | node -e "try{JSON.parse(require('fs').readFileSync(0,'utf-8'));}catch(e){process.exit(1);}"; then
-                echo "::error file=$PLUGIN_JSON::Invalid JSON"
                 COMMENT+=$'\n'"  - ❌ Invalid JSON"
                 PLUGIN_FAILED=1
+              else
+                COMMENT+=$'\n'"  - ✅ JSON valid"
               fi
 
-              # Owner / maintainers check
               OWNER=$(jq -r '.owner' "$PLUGIN_JSON")
               MAINTAINERS=$(jq -r '[.maintainers[]?] | join(" ")' "$PLUGIN_JSON")
               MAINTAINERS="${MAINTAINERS:-}"  # allow empty array
+
               if [[ "$PR_AUTHOR" != "$OWNER" ]] && [[ ! " $MAINTAINERS " =~ " $PR_AUTHOR " ]]; then
-                echo "::warning file=$PLUGIN_JSON::You are not the owner or a maintainer"
-                COMMENT+=$'\n'"  - ⚠️ You are not the owner or maintainer"
+                COMMENT+=$'\n'"  - ⚠️ You are not the owner or a maintainer"
                 PLUGIN_FAILED=1
+              else
+                COMMENT+=$'\n'"  - ✅ Owner/maintainer check passed"
               fi
 
-              # Version semantic check
               VERSION=$(jq -r '.version' "$PLUGIN_JSON")
-              if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-                echo "::warning file=$PLUGIN_JSON::Version is not semantic (X.Y.Z)"
-                COMMENT+=$'\n'"  - ⚠️ Version is not semantic (X.Y.Z)"
+              if [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+                COMMENT+=$'\n'"  - ✅ Version semantic check passed ($VERSION)"
+              else
+                COMMENT+=$'\n'"  - ⚠️ Version not semantic ($VERSION)"
               fi
 
               # Version bump check for updates
@@ -108,15 +110,16 @@ jobs:
                 if (( NEW_MAJOR < OLD_MAJOR )) || \
                    (( NEW_MAJOR == OLD_MAJOR && NEW_MINOR < OLD_MINOR )) || \
                    (( NEW_MAJOR == OLD_MAJOR && NEW_MINOR == OLD_MINOR && NEW_PATCH <= OLD_PATCH )); then
-                  echo "::error file=$PLUGIN_JSON::Version must be incremented from $OLD_VERSION (current on main)"
-                  COMMENT+=$'\n'"  - ❌ Version must be incremented from $OLD_VERSION"
+                  COMMENT+=$'\n'"  - ❌ Version must be incremented from $OLD_VERSION → $VERSION"
                   PLUGIN_FAILED=1
+                else
+                  COMMENT+=$'\n'"  - ✅ Version bump OK ($OLD_VERSION → $VERSION)"
                 fi
               fi
             fi
 
             if [ "$PLUGIN_FAILED" -eq 0 ]; then
-              COMMENT+=$'\n'"  - ✅ Passed all checks"
+              COMMENT+=$'\n'"  - ✅ All checks passed for $plugin"
             else
               FAILED=1
             fi
