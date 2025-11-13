@@ -237,10 +237,10 @@ jobs:
           # Delete all previous Plugin Validation Results comments by github-actions[bot]
           # List and debug all comments for this PR
           echo "--- DEBUG: All PR comments ---"
-          gh pr comment list $PR_NUMBER --json id,body,author > all_comments.json
+          gh issue comment list $PR_NUMBER --json id,body,author > all_comments.json
           cat all_comments.json
           echo "--- DEBUG: IDs to delete ---"
-          gh pr comment list $PR_NUMBER --json id,body,author --jq '.[] | select(.author.login=="github-actions[bot]") | select(.body | contains("<!--PLUGIN_VALIDATION_COMMENT-->") ) | .id' > ids_to_delete.txt
+          gh issue comment list $PR_NUMBER --json id,body,author --jq '.[] | select(.author.login=="github-actions[bot]") | select(.body | contains("<!--PLUGIN_VALIDATION_COMMENT-->") ) | .id' > ids_to_delete.txt
           cat ids_to_delete.txt
           # Delete all previous Plugin Validation Results comments by github-actions[bot]
           while read -r cid; do
