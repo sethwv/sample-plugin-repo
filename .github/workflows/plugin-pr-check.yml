@@ -98,7 +98,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           COMMENT="<!--PLUGIN_VALIDATION_COMMENT-->"
-          COMMENT+=$'\n'"### Plugin Validation Results"
+          COMMENT+=$'\n'"### Plugin Validation Resultsy"
           COMMENT+=$'\n'
 
           FAILED=0
