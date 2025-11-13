@@ -16,6 +16,35 @@ on:
       - '.github/workflows/plugins.yml'
 
 jobs:
+  draft-notice:
+    if: ${{ github.event.pull_request.draft == true }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Authenticate GH CLI
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh auth status
+
+      - name: Post draft notice
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          COMMENT="<!--PLUGIN_VALIDATION_DRAFT_NOTICE-->"
+          COMMENT+=$'\n'"⚠️ This PR is currently a draft. Plugin validation will run once the PR is marked ready for review."
+          EXISTING_COMMENT_ID=$(gh pr view $PR_NUMBER --json comments --jq '.comments[] | select(.author.login=="github-actions[bot]") | select(.body | contains("<!--PLUGIN_VALIDATION_DRAFT_NOTICE-->")) | .id')
+          if [ -n "$EXISTING_COMMENT_ID" ]; then
+            gh pr comment edit $EXISTING_COMMENT_ID --body "$COMMENT"
+          else
+            gh pr comment $PR_NUMBER --body "$COMMENT"
+          fi
+
   validate-and-comment:
     runs-on: ubuntu-latest
     steps:
