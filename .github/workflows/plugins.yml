@@ -1,0 +1,79 @@
+name: Validate & Enforce Plugin Ownership
+
+permissions:
+  contents: write
+
+on:
+  pull_request:
+    paths:
+      - 'plugins/**'
+
+jobs:
+  validate-and-package:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Find modified plugins
+        id: changes
+        run: |
+          echo "PLUGIN_DIRS=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep 'plugins/' | cut -d '/' -f2 | sort -u)" >> $GITHUB_ENV
+
+      - name: Validate plugin structure
+        run: |
+          FAILED=0
+          for plugin in $PLUGIN_DIRS; do
+            if [ ! -f "plugins/$plugin/plugin.json" ]; then
+              echo "::error file=plugins/$plugin::plugin.json missing"
+              FAILED=1
+            fi
+            if [ ! -f "plugins/$plugin/README.md" ]; then
+              echo "::error file=plugins/$plugin::README.md missing"
+              FAILED=1
+            fi
+          done
+          if [ "$FAILED" -ne 0 ]; then exit 1; fi
+
+      - name: Validate JSON syntax
+        run: |
+          for plugin in $PLUGIN_DIRS; do
+            cat "plugins/$plugin/plugin.json" | node -e "try{JSON.parse(require('fs').readFileSync(0,'utf-8'));}catch(e){console.error('Invalid JSON in plugins/$plugin/plugin.json'); process.exit(1);}"
+          done
+
+      - name: Check plugin ownership
+        run: |
+          AUTHOR="${{ github.actor }}"
+          FAILED=0
+          for plugin in $PLUGIN_DIRS; do
+            if [ -f "plugins/$plugin/plugin.json" ]; then
+              OWNER=$(jq -r '.owner' "plugins/$plugin/plugin.json")
+              MAINTAINERS=$(jq -r '[.maintainers[]?] | join(" ")' "plugins/$plugin/plugin.json")
+              if [[ "$AUTHOR" != "$OWNER" ]] && [[ ! " $MAINTAINERS " =~ " $AUTHOR " ]]; then
+                echo "::error file=plugins/$plugin::You do not have permission to modify this plugin"
+                FAILED=1
+              fi
+            fi
+          done
+          if [ "$FAILED" -ne 0 ]; then exit 1; fi
+
+      - name: Check version bumps
+        run: |
+          FAILED=0
+          for plugin in $PLUGIN_DIRS; do
+            CURRENT_VERSION=$(git show main:plugins/$plugin/plugin.json | jq -r '.version' || echo "")
+            NEW_VERSION=$(jq -r '.version' "plugins/$plugin/plugin.json")
+            if [[ "$CURRENT_VERSION" == "$NEW_VERSION" ]]; then
+              echo "::warning file=plugins/$plugin::Version did not change; bump version for updates"
+            fi
+            if ! [[ "$NEW_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              echo "::error file=plugins/$plugin::Version must follow semantic versioning (X.Y.Z)"
+              FAILED=1
+            fi
+          done
+          if [ "$FAILED" -ne 0 ]; then exit 1; fi
