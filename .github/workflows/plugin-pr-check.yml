@@ -231,14 +231,22 @@ jobs:
 
           # Append plugin.json table(s) right after the last plugin's results and global summary
           if [ -n "$PLUGIN_TABLES" ]; then
-            COMMENT+=$'\n'"$PLUGIN_TABLES"
+            COMMENT+=$'\n\n### Plugin Information\n'$'\n'"$PLUGIN_TABLES"
           fi
 
           # Delete all previous Plugin Validation Results comments by github-actions[bot]
-          # List and delete all previous Plugin Validation Results comments by github-actions[bot]
-          gh pr comment list $PR_NUMBER --json id,body,author --jq '.[] | select(.author.login=="github-actions[bot]") | select(.body | contains("<!--PLUGIN_VALIDATION_COMMENT-->") ) | .id' | while read -r cid; do
+          # List and debug all comments for this PR
+          echo "--- DEBUG: All PR comments ---"
+          gh pr comment list $PR_NUMBER --json id,body,author > all_comments.json
+          cat all_comments.json
+          echo "--- DEBUG: IDs to delete ---"
+          gh pr comment list $PR_NUMBER --json id,body,author --jq '.[] | select(.author.login=="github-actions[bot]") | select(.body | contains("<!--PLUGIN_VALIDATION_COMMENT-->") ) | .id' > ids_to_delete.txt
+          cat ids_to_delete.txt
+          # Delete all previous Plugin Validation Results comments by github-actions[bot]
+          while read -r cid; do
+            echo "Deleting comment ID: $cid"
             gh pr comment delete "$cid" --yes
-          done
+          done < ids_to_delete.txt
 
           # Post new PR comment
           gh pr comment $PR_NUMBER --body "$COMMENT"
