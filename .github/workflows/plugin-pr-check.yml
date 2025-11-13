@@ -6,12 +6,38 @@ permissions:
 
 on:
   pull_request:
+    types: [opened, edited, synchronize]
     paths:
       - 'plugins/**'
       - '.github/workflows/plugins.yml'
 
 jobs:
+  draft-notice:
+    if: ${{ github.event.pull_request.draft == true && github.event.action == 'opened' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Authenticate GH CLI
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh auth status
+
+      - name: Post draft notice
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          COMMENT="<!--PLUGIN_VALIDATION_DRAFT_NOTICE-->"
+          COMMENT+=$'\n'"⚠️ This PR is currently a draft. Plugin validation will run once the PR is marked ready for review."
+          EXISTING_COMMENT_ID=$(gh pr view $PR_NUMBER --json comments --jq '.comments[] | select(.author.login=="github-actions[bot]") | select(.body | contains("<!--PLUGIN_VALIDATION_DRAFT_NOTICE-->")) | .id')
+          if [ -n "$EXISTING_COMMENT_ID" ]; then
+            gh pr comment edit $EXISTING_COMMENT_ID --body "$COMMENT"
+          else
+            gh pr comment $PR_NUMBER --body "$COMMENT"
+          fi
+
   validate-and-comment:
+    if: ${{ github.event.pull_request.draft == false }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout PR
@@ -58,7 +84,7 @@ jobs:
             COMMENT+=$'\n'"- **$plugin**:"
             PLUGIN_FAILED=0
 
-            # Check plugin.json existence
+            # plugin.json check
             if [ ! -f "$PLUGIN_JSON" ]; then
               COMMENT+=$'\n'"  - ❌ plugin.json missing"
               PLUGIN_FAILED=1
@@ -66,7 +92,7 @@ jobs:
               COMMENT+=$'\n'"  - ✅ plugin.json exists"
             fi
 
-            # Check README.md existence
+            # README check
             if [ ! -f "$README" ]; then
               COMMENT+=$'\n'"  - ❌ README.md missing"
               PLUGIN_FAILED=1
@@ -74,7 +100,7 @@ jobs:
               COMMENT+=$'\n'"  - ✅ README.md exists"
             fi
 
-            # Validate JSON and extract fields
+            # JSON validation and owner/maintainers/version checks
             if [ -f "$PLUGIN_JSON" ]; then
               if ! cat "$PLUGIN_JSON" | node -e "try{JSON.parse(require('fs').readFileSync(0,'utf-8'));}catch(e){process.exit(1);}"; then
                 COMMENT+=$'\n'"  - ❌ Invalid JSON"
@@ -85,7 +111,7 @@ jobs:
 
               OWNER=$(jq -r '.owner' "$PLUGIN_JSON")
               MAINTAINERS=$(jq -r '[.maintainers[]?] | join(" ")' "$PLUGIN_JSON")
-              MAINTAINERS="${MAINTAINERS:-}"  # allow empty array
+              MAINTAINERS="${MAINTAINERS:-}"
 
               if [[ "$PR_AUTHOR" != "$OWNER" ]] && [[ ! " $MAINTAINERS " =~ " $PR_AUTHOR " ]]; then
                 COMMENT+=$'\n'"  - ⚠️ You are not the owner or a maintainer"
@@ -101,7 +127,7 @@ jobs:
                 COMMENT+=$'\n'"  - ⚠️ Version not semantic ($VERSION)"
               fi
 
-              # Version bump check for updates
+              # Version bump for existing plugin
               if git show origin/main:"$PLUGIN_JSON" > /dev/null 2>&1; then
                 OLD_VERSION=$(git show origin/main:"$PLUGIN_JSON" | jq -r '.version')
                 IFS='.' read -r OLD_MAJOR OLD_MINOR OLD_PATCH <<< "$OLD_VERSION"
@@ -115,6 +141,9 @@ jobs:
                 else
                   COMMENT+=$'\n'"  - ✅ Version bump OK ($OLD_VERSION → $VERSION)"
                 fi
+              else
+                # New plugin → report version
+                COMMENT+=$'\n'"  - ✅ New plugin version ($VERSION)"
               fi
             fi
 
