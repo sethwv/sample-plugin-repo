@@ -55,8 +55,8 @@ jobs:
             git rm -rf .
             git commit --allow-empty -m "Initial empty commit on releases branch"
           fi
-          # Remove old artifacts
-          rm -rf releases manifest.json README.md
+          # Do not remove plugin subfolders in releases/; just overwrite or add new zips as needed
+          rm -f manifest.json README.md
           # Fetch full main history and copy source files from main branch for build
           git fetch origin main
           git checkout origin/main -- plugins
