@@ -3,8 +3,8 @@
 This repository hosts publicly available plugins.
 
 - All plugins are in `plugins/`
-- Download plugin ZIPs and manifest from the [releases branch](https://github.com/${GITHUB_REPOSITORY}/tree/releases)
-- See [PLUGINS.md](https://github.com/${GITHUB_REPOSITORY}/blob/maintainers/PLUGINS.md) for the current plugin list and maintainers
+- Download plugin ZIPs and manifest from the [releases branch](https://github.com/sethwv/sample-plugin-repo/tree/releases)
+- See [PLUGINS.md](https://github.com/sethwv/sample-plugin-repo/blob/maintainers/PLUGINS.md) for the current plugin list and maintainers
 
 ## Pull Request Requirements
 
@@ -15,7 +15,7 @@ This repository hosts publicly available plugins.
 
 ## Publishing & Releases
 
-- Plugin ZIPs and the manifest are published automatically to the [releases branch](https://github.com/${GITHUB_REPOSITORY}/tree/releases) after PRs are merged to `main`.
+- Plugin ZIPs and the manifest are published automatically to the [releases branch](https://github.com/sethwv/sample-plugin-repo/tree/releases) after PRs are merged to `main`.
 - Only the 10 most recent versioned ZIPs per plugin are retained.
 - The manifest includes metadata and download links for all plugins.
 
