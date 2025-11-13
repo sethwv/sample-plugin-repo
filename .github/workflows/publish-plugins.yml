@@ -85,8 +85,8 @@ jobs:
               NAME=$(jq -r '.name' "$plugin_file")
               DATE=$(git log -1 --format=%cI origin/main -- "$plugin_dir")
               # Find all versioned zips (excluding latest)
-              versioned_zips_list=$(ls -1 releases/$NAME/${NAME}-*.zip 2>/dev/null | grep -v latest | xargs -n1 basename)
-              latest_zip_url="https://github.com/${GITHUB_REPOSITORY}/raw/releases/releases/${NAME}/${NAME}-latest.zip"
+              versioned_zips_list=$(ls -1t releases/$NAME/${NAME}-*.zip 2>/dev/null | grep -v latest | xargs -n1 basename)
+              latest_url="https://github.com/${GITHUB_REPOSITORY}/raw/releases/releases/${NAME}/${NAME}-latest.zip"
               versioned_zips_json="[]"
               for zipfile in $versioned_zips_list; do
                 url="https://github.com/${GITHUB_REPOSITORY}/raw/releases/releases/${NAME}/$zipfile"
