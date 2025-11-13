@@ -145,13 +145,24 @@ jobs:
                 PLUGIN_FAILED=1
               else
                 COMMENT+=$'\n'"  - ✅ JSON valid"
+                # Validate required properties
+                REQUIRED_KEYS=(name version owner maintainers description test)
+                for req_key in "${REQUIRED_KEYS[@]}"; do
+                  if ! jq -e ".[\"$req_key\"]" "$PLUGIN_JSON" >/dev/null; then
+                    COMMENT+=$'\n'"  - ❌ Required property '$req_key' missing"
+                    PLUGIN_FAILED=1
+                  fi
+                done
                 # Build table header and row for plugin.json fields
                 KEYS=($(jq -r 'keys_unsorted[]' "$PLUGIN_JSON"))
                 TABLE_HEADER="|"
                 TABLE_ROW="|"
                 for key in "${KEYS[@]}"; do
                   TABLE_HEADER+=" $key |"
-                  value=$(jq -r ".[\"$key\"] | if type==\"array\" or type==\"object\" then @json else . end" "$PLUGIN_JSON")
+                  # If the value is an array of strings, join as comma-separated
+                  value=$(jq -r \
+                    ".[\"$key\"] | if type==\"array\" and (map(type) | all(. == \"string\")) then join(", ") \
+                    elif type==\"array\" or type==\"object\" then @json else . end" "$PLUGIN_JSON")
                   TABLE_ROW+=" $value |"
                 done
                 # Markdown separator row
