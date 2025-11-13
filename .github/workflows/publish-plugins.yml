@@ -43,6 +43,8 @@ jobs:
           git checkout --orphan plugins
           git reset --hard
           find . -mindepth 1 -maxdepth 1 ! -name '.git' -exec rm -rf {} +
+          # Make initial empty commit so we can check out files from main
+          git commit --allow-empty -m "Initial empty commit on plugins branch"
           # Restore plugins directory from main branch
           git checkout main -- plugins
           # Generate releases zips
