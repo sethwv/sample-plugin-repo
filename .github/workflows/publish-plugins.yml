@@ -86,11 +86,16 @@ jobs:
               VERSION=$(jq -r '.version' "$PLUGIN_JSON")
               OWNER=$(jq -r '.owner' "$PLUGIN_JSON")
               MAINTAINERS=$(jq -r '[.maintainers[]?] | join(", ")' "$PLUGIN_JSON")
-              DATE=$(git log -1 --format=%cI -- "$PLUGIN_JSON")
+              DATE=$(jq -r '.date // empty' "$PLUGIN_JSON")
+              if [ -z "$DATE" ]; then
+                DATE=$(git log -1 --format=%cI -- "$PLUGIN_JSON")
+              fi
               ZIP_URL="https://github.com/${GITHUB_REPOSITORY}/raw/${BRANCH}/releases/$(basename $plugin_dir).zip"
               echo "| $NAME | $VERSION | $OWNER | $MAINTAINERS | $DATE | [ZIP]($ZIP_URL) |" >> $MD_FILE
             fi
           done
+          # Remove plugins/ folder before committing
+          rm -rf plugins
           # Add and commit only to plugins branch
           git add releases manifest.json README.md
           git commit -m "Publish plugin zips, manifest, and README.md [skip ci]"
