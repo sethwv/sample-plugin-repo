@@ -234,13 +234,14 @@ jobs:
             COMMENT+=$'\n'"$PLUGIN_TABLES"
           fi
 
-          # Post or update single PR comment
-          EXISTING_COMMENT_ID=$(gh pr view $PR_NUMBER --json comments --jq '.comments[] | select(.author.login=="github-actions[bot]") | select(.body | contains("<!--PLUGIN_VALIDATION_COMMENT-->") ) | .id')
-          if [ -n "$EXISTING_COMMENT_ID" ]; then
-            gh pr comment edit $EXISTING_COMMENT_ID --body "$COMMENT"
-          else
-            gh pr comment $PR_NUMBER --body "$COMMENT"
-          fi
+          # Delete all previous Plugin Validation Results comments by github-actions[bot]
+          COMMENT_IDS=$(gh pr view $PR_NUMBER --json comments --jq '.comments[] | select(.author.login=="github-actions[bot]") | select(.body | contains("<!--PLUGIN_VALIDATION_COMMENT-->") ) | .id')
+          for cid in $COMMENT_IDS; do
+            gh pr comment delete $cid --yes
+          done
+
+          # Post new PR comment
+          gh pr comment $PR_NUMBER --body "$COMMENT"
 
       - name: Fail workflow if any critical errors
         if: ${{ always() }}
