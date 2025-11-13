@@ -39,10 +39,23 @@ jobs:
           set -ex
           git config --local user.name "github-actions[bot]"
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          # Clone the repo to a temp directory for artifact generation
+          # Clone the repo fresh for artifact branch work
           TMPDIR=$(mktemp -d)
-          git clone . "$TMPDIR/fullrepo"
-          cd "$TMPDIR/fullrepo"
+          git clone --no-checkout "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$TMPDIR/plugins-branch"
+          cd "$TMPDIR/plugins-branch"
+          # Check if plugins branch exists on remote
+          if git ls-remote --exit-code --heads origin plugins; then
+            git checkout plugins
+            git pull origin plugins || true
+          else
+            git checkout --orphan plugins
+            git rm -rf .
+            git commit --allow-empty -m "Initial empty commit on plugins branch"
+          fi
+          # Remove old artifacts
+          rm -rf releases manifest.json README.md
+          # Copy source files from main branch for build
+          git checkout origin/main -- plugins
           # Generate releases zips in subfolders, with latest and versioned zips
           mkdir -p releases
           for plugin_dir in plugins/*/; do
@@ -96,29 +109,7 @@ jobs:
               echo "| $NAME | $VERSION | $OWNER | $MAINTAINERS | $DATE | [ZIP]($ZIP_URL) |" >> $MD_FILE
             fi
           done
-          # Copy artifacts back to workspace root
-          cp -r releases "$GITHUB_WORKSPACE"/
-          cp manifest.json "$GITHUB_WORKSPACE"/
-          cp README.md "$GITHUB_WORKSPACE"/
-          cd "$GITHUB_WORKSPACE"
-          # Switch to plugins branch (create if it doesn't exist)
-          if git show-ref --quiet refs/heads/plugins; then
-            git checkout plugins
-            git pull origin plugins || true
-            # Remove old artifacts
-            rm -rf releases manifest.json README.md
-          else
-            git checkout --orphan plugins
-            git reset --hard
-            find . -mindepth 1 -maxdepth 1 ! -name '.git' -exec rm -rf {} +
-            git commit --allow-empty -m "Initial empty commit on plugins branch"
-          fi
-          # Copy new artifacts from temp build
-          cp -r "$TMPDIR/fullrepo/releases" .
-          cp "$TMPDIR/fullrepo/manifest.json" .
-          cp "$TMPDIR/fullrepo/README.md" .
           # Add, commit, and push only changes
           git add releases manifest.json README.md
           git diff --cached --quiet || git commit -m "Publish plugin zips, manifest, and README.md [skip ci]"
-          git pull --rebase origin plugins || true
           git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" plugins
