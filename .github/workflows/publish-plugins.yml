@@ -92,12 +92,7 @@ jobs:
                 url="https://github.com/${GITHUB_REPOSITORY}/raw/releases/releases/${NAME}/$zipfile"
                 versioned_zips_json=$(jq --arg url "$url" '. + [$url]' <<< "$versioned_zips_json")
               done
-              # Most recent versioned zip URL (if any)
-              versioned_zip_url=""
-              if [ -n "$versioned_zips_list" ]; then
-                versioned_zip_url=$(echo "$versioned_zips_json" | jq -r '.[0]')
-              fi
-              PLUGIN_JSON=$(jq --arg date "$DATE" --arg latest "$latest_zip_url" --arg versioned "$versioned_zip_url" --argjson versioned_zips "$versioned_zips_json" '. + {date: $date, latest_zip_url: $latest, versioned_zip_url: $versioned, versioned_zips: $versioned_zips}' "$plugin_file")
+              PLUGIN_JSON=$(jq --arg lastUpdated "$DATE" --arg latest "$latest_zip_url" --argjson versioned_zips "$versioned_zips_json" '. + {lastUpdated: $lastUpdated, latest_zip_url: $latest, versioned_zips: $versioned_zips}' "$plugin_file")
               if [ "$FIRST" = true ]; then
                 FIRST=false
               else
@@ -107,7 +102,7 @@ jobs:
             fi
           done
           echo "]}" >> tmp_manifest.json
-          mv tmp_manifest.json $MANIFEST
+          cat tmp_manifest.json | jq '.' > $MANIFEST
           # Generate README.md
           MD_FILE="README.md"
           BRANCH="releases"
