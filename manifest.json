@@ -1,0 +1,3 @@
+{ "plugins": [
+{"name":"sample","version":"1.0.0","author":"Contributor Name","owner":"sethwv","maintainers":["maintainer1","maintainer2"],"description":"A short description","date":"2025-11-13"}
+]}
