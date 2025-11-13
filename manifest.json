@@ -1,0 +1,10 @@
+{ "plugins": [
+{
+  "name": "sample",
+  "version": "1.0.0",
+  "owner": "sethwv",
+  "maintainers": [],
+  "description": "A short description",
+  "date": "2025-11-13T12:12:11-05:00"
+}
+]}
