@@ -235,9 +235,9 @@ jobs:
           fi
 
           # Delete all previous Plugin Validation Results comments by github-actions[bot]
-          COMMENT_IDS=$(gh pr view $PR_NUMBER --json comments --jq '.comments[] | select(.author.login=="github-actions[bot]") | select(.body | contains("<!--PLUGIN_VALIDATION_COMMENT-->") ) | .id')
-          for cid in $COMMENT_IDS; do
-            gh pr comment delete $cid --yes
+          # List and delete all previous Plugin Validation Results comments by github-actions[bot]
+          gh pr comment list $PR_NUMBER --json id,body,author --jq '.[] | select(.author.login=="github-actions[bot]") | select(.body | contains("<!--PLUGIN_VALIDATION_COMMENT-->") ) | .id' | while read -r cid; do
+            gh pr comment delete "$cid" --yes
           done
 
           # Post new PR comment
