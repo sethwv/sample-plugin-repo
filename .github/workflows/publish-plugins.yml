@@ -36,7 +36,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          set -e
+          set -ex
           git config --local user.name "github-actions[bot]"
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           # Create orphan plugins branch and clean
@@ -94,10 +94,15 @@ jobs:
               echo "| $NAME | $VERSION | $OWNER | $MAINTAINERS | $DATE | [ZIP]($ZIP_URL) |" >> $MD_FILE
             fi
           done
+          # Show contents before removing plugins/
+          echo "Before removing plugins/:"
+          ls -la
           # Remove plugins/ folder before committing (ignore error if already removed)
-          if [ -d plugins ]; then
-            rm -rf plugins
+          if [ -d ./plugins ]; then
+            rm -rf ./plugins
           fi
+          echo "After removing plugins/:"
+          ls -la
           # Add and commit only to plugins branch
           git add releases manifest.json README.md
           git commit -m "Publish plugin zips, manifest, and README.md [skip ci]"
