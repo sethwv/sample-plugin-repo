@@ -94,8 +94,10 @@ jobs:
               echo "| $NAME | $VERSION | $OWNER | $MAINTAINERS | $DATE | [ZIP]($ZIP_URL) |" >> $MD_FILE
             fi
           done
-          # Remove plugins/ folder before committing
-          rm -rf plugins
+          # Remove plugins/ folder before committing (ignore error if already removed)
+          if [ -d plugins ]; then
+            rm -rf plugins
+          fi
           # Add and commit only to plugins branch
           git add releases manifest.json README.md
           git commit -m "Publish plugin zips, manifest, and README.md [skip ci]"
