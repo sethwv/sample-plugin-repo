@@ -59,7 +59,7 @@ jobs:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.ref }}
 
-      - name: Fetch base branch for diff
+      - name: Fetch base branch fully
         run: git fetch origin ${{ github.event.pull_request.base.ref }}:refs/remotes/origin/base
 
       - name: Set up Node.js
@@ -84,11 +84,11 @@ jobs:
           FAILED=0
           PR_AUTHOR="${{ github.actor }}"
 
-          # Compute merge base
-          MERGE_BASE=$(git merge-base ${{ github.event.pull_request.base.sha }} ${{ github.sha }})
+          # Compute merge base relative to the fully fetched base branch
+          MERGE_BASE=$(git merge-base origin/base HEAD)
 
           # Detect modified plugins relative to merge base
-          PLUGIN_DIRS=$(git diff --name-only $MERGE_BASE ${{ github.sha }} \
+          PLUGIN_DIRS=$(git diff --name-only $MERGE_BASE HEAD \
             | grep '^plugins/' | cut -d '/' -f2 | sort -u | uniq)
 
           echo "Modified plugin directories detected: $PLUGIN_DIRS"
