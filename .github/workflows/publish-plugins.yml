@@ -112,6 +112,9 @@ jobs:
           # Set git user for commit
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          # Remove plugins/ from workspace and git index before committing
+          rm -rf plugins
+          git rm -rf --cached plugins || true
           # Add, commit, and push only changes
           git add releases manifest.json README.md
           git diff --cached --quiet || git commit -m "Publish plugin zips, manifest, and README.md [skip ci]"
