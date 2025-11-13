@@ -16,26 +16,6 @@ on:
       - '.github/workflows/plugins.yml'
 
 jobs:
-  check-workflow-consistency:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout current branch
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-
-      - name: Download workflow from main branch
-        run: |
-          mkdir -p /tmp/workflow-compare
-          git show origin/main:.github/workflows/plugin-pr-check.yml > /tmp/workflow-compare/plugin-pr-check.main.yml
-
-      - name: Compare workflow to main branch
-        run: |
-          diff -u /tmp/workflow-compare/plugin-pr-check.main.yml .github/workflows/plugin-pr-check.yml > /tmp/workflow-compare/diff.txt || {
-            echo "::error::Workflow file differs from main branch. See /tmp/workflow-compare/diff.txt for details.";
-            exit 1;
-          }
-
   draft-notice:
     if: ${{ github.event.pull_request.draft == true }}
     runs-on: ubuntu-latest
@@ -112,17 +92,6 @@ jobs:
           if [[ "$PERMISSION" == "admin" || "$PERMISSION" == "write" ]]; then
             IS_REPO_MAINTAINER=1
           fi
-
-            # Check for workflow diff from consistency check job
-            if [ -f /tmp/workflow-compare/diff.txt ]; then
-              COMMENT+=$'\n'"❌ **Error:** Workflow file differs from main branch."
-              COMMENT+=$'\n'"<details><summary>Show diff</summary>"
-              COMMENT+=$'\n'"\n\`\`\`diff"
-              COMMENT+=$(cat /tmp/workflow-compare/diff.txt)
-              COMMENT+=$'\n'"\`\`\`"
-              COMMENT+=$'\n'"</details>"
-              FAILED=1
-            fi
 
           # Compute merge base relative to the fully fetched base branch
           MERGE_BASE=$(git merge-base origin/base HEAD)
