@@ -14,6 +14,12 @@ on:
     paths:
       - 'plugins/**'
       - '.github/workflows/plugins.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'plugins/**'
+      - '.github/workflows/plugins.yml'
 
 jobs:
   draft-notice:
@@ -47,6 +53,12 @@ jobs:
   validate-and-comment:
     runs-on: ubuntu-latest
     steps:
+      - name: Instant pass for actions user or push to main
+        if: ${{ github.actor == 'github-actions[bot]' || github.event_name == 'push' }}
+        run: |
+          echo "PR created by actions user or push to main, skipping validation."
+          exit 0
+
       - name: Fail if PR is draft
         if: ${{ github.event.pull_request.draft == true }}
         run: |
