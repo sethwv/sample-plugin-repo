@@ -46,9 +46,14 @@ jobs:
           fi
 
   validate-and-comment:
-    if: ${{ github.event.pull_request.draft == false }}
     runs-on: ubuntu-latest
     steps:
+      - name: Fail if PR is draft
+        if: ${{ github.event.pull_request.draft == true }}
+        run: |
+          echo "❌ PR is a draft — validation cannot run on draft PRs"
+          exit 1
+
       - name: Checkout PR
         uses: actions/checkout@v3
         with:
