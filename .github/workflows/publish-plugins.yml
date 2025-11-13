@@ -110,8 +110,9 @@ jobs:
           fi
           # Remove everything except .git to fully clear branch
           find . -mindepth 1 -maxdepth 1 ! -name '.git' -exec rm -rf {} +
-          # Copy releases/ for plugins branch
-          git checkout main -- releases
+          # Ensure releases directory exists before copying
+          mkdir -p releases
+          git checkout main -- releases || true
           # Add and commit only to plugins branch
           git add releases manifest.json README.md
           git diff --cached --quiet || git commit -m "Publish plugin zips, manifest, and README.md [skip ci]"
