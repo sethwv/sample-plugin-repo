@@ -6,14 +6,18 @@ permissions:
 
 on:
   pull_request:
-    types: [opened, edited, synchronize]
+    types:
+      - opened
+      - edited
+      - synchronize
+      - ready_for_review
     paths:
       - 'plugins/**'
       - '.github/workflows/plugins.yml'
 
 jobs:
   draft-notice:
-    if: ${{ github.event.pull_request.draft == true && github.event.action == 'opened' }}
+    if: ${{ github.event.pull_request.draft == true }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
