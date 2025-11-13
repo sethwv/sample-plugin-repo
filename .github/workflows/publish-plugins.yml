@@ -43,6 +43,8 @@ jobs:
           git checkout --orphan plugins
           git reset --hard
           find . -mindepth 1 -maxdepth 1 ! -name '.git' -exec rm -rf {} +
+          # Restore plugins directory from main branch
+          git checkout main -- plugins
           # Generate releases zips
           mkdir -p releases
           for plugin_dir in plugins/*/; do
