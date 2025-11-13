@@ -28,7 +28,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "$GH_TOKEN" | gh auth login --with-token
+          gh auth status
 
       - name: Validate plugin(s) and build PR comment
         env:
