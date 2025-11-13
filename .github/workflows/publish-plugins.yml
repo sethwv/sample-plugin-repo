@@ -92,7 +92,7 @@ jobs:
                 url="https://github.com/${GITHUB_REPOSITORY}/raw/releases/releases/${NAME}/$zipfile"
                 versioned_zips_json=$(jq --arg url "$url" '. + [$url]' <<< "$versioned_zips_json")
               done
-              PLUGIN_JSON=$(jq --arg lastUpdated "$DATE" --arg latest "$latest_zip_url" --argjson versioned_zips "$versioned_zips_json" '. + {lastUpdated: $lastUpdated, latest_zip_url: $latest, versioned_zips: $versioned_zips}' "$plugin_file")
+              PLUGIN_JSON=$(jq --arg last_updated "$DATE" --arg latest_url "$latest_url" --argjson versioned_zips "$versioned_zips_json" '. + {last_updated: $last_updated, latest_url: $latest_url, versioned_zips: $versioned_zips}' "$plugin_file")
               if [ "$FIRST" = true ]; then
                 FIRST=false
               else
