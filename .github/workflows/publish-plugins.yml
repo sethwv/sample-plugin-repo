@@ -30,8 +30,9 @@ jobs:
             zip -r "releases/$plugin_name.zip" "$plugin_dir"
           done
 
-      - name: Generate manifest.json with commit dates
+      - name: Prepare manifest.json and README.md for plugins branch
         run: |
+          # Generate manifest.json
           MANIFEST="manifest.json"
           echo '{ "plugins": [' > tmp_manifest.json
           FIRST=true
@@ -52,9 +53,9 @@ jobs:
           echo "]}" >> tmp_manifest.json
           mv tmp_manifest.json $MANIFEST
 
-      - name: Generate PLUGINS.md
-        run: |
-          MD_FILE="PLUGINS.md"
+          # Generate README.md for plugins branch
+          MD_FILE="README.md"
+          BRANCH="plugins"
           echo "# Plugin List" > $MD_FILE
           echo "" >> $MD_FILE
           echo "| Name | Version | Owner | Maintainers | Date | ZIP |" >> $MD_FILE
@@ -67,20 +68,37 @@ jobs:
               OWNER=$(jq -r '.owner' "$PLUGIN_JSON")
               MAINTAINERS=$(jq -r '[.maintainers[]?] | join(", ")' "$PLUGIN_JSON")
               DATE=$(git log -1 --format=%cI -- "$PLUGIN_JSON")
-              ZIP_URL="https://github.com/${GITHUB_REPOSITORY}/raw/main/releases/$(basename $plugin_dir).zip"
+              ZIP_URL="https://github.com/${GITHUB_REPOSITORY}/raw/${BRANCH}/releases/$(basename $plugin_dir).zip"
               echo "| $NAME | $VERSION | $OWNER | $MAINTAINERS | $DATE | [ZIP]($ZIP_URL) |" >> $MD_FILE
             fi
           done
 
-      - name: Publish to plugins branch (only releases/ and README.md)
+      - name: Publish to plugins branch (releases/, manifest.json, README.md)
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -e
           git config --local user.name "github-actions[bot]"
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          # Copy PLUGINS.md to README.md for publishing
-          cp PLUGINS.md README.md
+          # Generate README.md for plugins branch with correct ZIP links
+          MD_FILE="README.md"
+          BRANCH="plugins"
+          echo "# Plugin List" > $MD_FILE
+          echo "" >> $MD_FILE
+          echo "| Name | Version | Owner | Maintainers | Date | ZIP |" >> $MD_FILE
+          echo "|------|--------|-------|------------|------|-----|" >> $MD_FILE
+          for plugin_dir in plugins/*/; do
+            PLUGIN_JSON="$plugin_dir/plugin.json"
+            if [ -f "$PLUGIN_JSON" ]; then
+              NAME=$(jq -r '.name' "$PLUGIN_JSON")
+              VERSION=$(jq -r '.version' "$PLUGIN_JSON")
+              OWNER=$(jq -r '.owner' "$PLUGIN_JSON")
+              MAINTAINERS=$(jq -r '[.maintainers[]?] | join(", ")' "$PLUGIN_JSON")
+              DATE=$(git log -1 --format=%cI -- "$PLUGIN_JSON")
+              ZIP_URL="https://github.com/${GITHUB_REPOSITORY}/raw/${BRANCH}/releases/$(basename $plugin_dir).zip"
+              echo "| $NAME | $VERSION | $OWNER | $MAINTAINERS | $DATE | [ZIP]($ZIP_URL) |" >> $MD_FILE
+            fi
+          done
           # Stash current changes
           git stash --include-untracked
           # Switch to plugins branch (create if doesn't exist)
@@ -92,10 +110,9 @@ jobs:
           fi
           # Remove everything except .git to fully clear branch
           find . -mindepth 1 -maxdepth 1 ! -name '.git' -exec rm -rf {} +
-          # Restore releases/ and README.md from main branch
+          # Copy releases/ for plugins branch
           git checkout main -- releases
-          git checkout main -- README.md
-          # Add and commit
-          git add releases README.md
-          git diff --cached --quiet || git commit -m "Publish plugin zips and README.md [skip ci]"
+          # Add and commit only to plugins branch
+          git add releases manifest.json README.md
+          git diff --cached --quiet || git commit -m "Publish plugin zips, manifest, and README.md [skip ci]"
           git push --force "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" plugins
