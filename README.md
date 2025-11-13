@@ -4,7 +4,7 @@ This repository hosts publicly available plugins.
 
 - All plugins are in `plugins/`
 - Download plugin ZIPs and manifest from the [releases branch](https://github.com/${GITHUB_REPOSITORY}/tree/releases)
-- See [PLUGINS.md](PLUGINS.md) for the current plugin list and maintainers
+- See [PLUGINS.md](https://github.com/${GITHUB_REPOSITORY}/blob/maintainers/PLUGINS.md) for the current plugin list and maintainers
 
 ## Pull Request Requirements
 
