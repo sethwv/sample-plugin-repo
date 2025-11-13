@@ -30,29 +30,8 @@ jobs:
             zip -r "releases/$plugin_name.zip" "$plugin_dir"
           done
 
-      - name: Prepare manifest.json and README.md for plugins branch
+      - name: Prepare README.md for plugins branch
         run: |
-          # Generate manifest.json
-          MANIFEST="manifest.json"
-          echo '{ "plugins": [' > tmp_manifest.json
-          FIRST=true
-          for plugin_dir in plugins/*/; do
-            plugin_file="$plugin_dir/plugin.json"
-            if [ -f "$plugin_file" ]; then
-              # Use last commit date of plugin.json for manifest
-              DATE=$(git log -1 --format=%cI -- "$plugin_file")
-              PLUGIN_JSON=$(jq --arg date "$DATE" '. + {date: $date}' "$plugin_file")
-              if [ "$FIRST" = true ]; then
-                FIRST=false
-              else
-                echo "," >> tmp_manifest.json
-              fi
-              echo "$PLUGIN_JSON" >> tmp_manifest.json
-            fi
-          done
-          echo "]}" >> tmp_manifest.json
-          mv tmp_manifest.json $MANIFEST
-
           # Generate README.md for plugins branch
           MD_FILE="README.md"
           BRANCH="plugins"
@@ -112,6 +91,26 @@ jobs:
           find . -mindepth 1 -maxdepth 1 ! -name '.git' -exec rm -rf {} +
           # Ensure releases directory exists
           mkdir -p releases
+          # Generate manifest.json just before commit
+          MANIFEST="manifest.json"
+          echo '{ "plugins": [' > tmp_manifest.json
+          FIRST=true
+          for plugin_dir in plugins/*/; do
+            plugin_file="$plugin_dir/plugin.json"
+            if [ -f "$plugin_file" ]; then
+              DATE=$(git log -1 --format=%cI -- "$plugin_file")
+              PLUGIN_JSON=$(jq --arg date "$DATE" '. + {date: $date}' "$plugin_file")
+              if [ "$FIRST" = true ]; then
+                FIRST=false
+              else
+                echo "," >> tmp_manifest.json
+              fi
+              echo "$PLUGIN_JSON" >> tmp_manifest.json
+            fi
+          done
+          echo "]}" >> tmp_manifest.json
+          mv tmp_manifest.json $MANIFEST
+
           # Add and commit only to plugins branch
           git add releases manifest.json README.md
           git diff --cached --quiet || git commit -m "Publish plugin zips, manifest, and README.md [skip ci]"
