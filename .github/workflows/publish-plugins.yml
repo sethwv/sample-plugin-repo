@@ -109,6 +109,9 @@ jobs:
               echo "| $NAME | $VERSION | $OWNER | $MAINTAINERS | $DATE | [ZIP]($ZIP_URL) |" >> $MD_FILE
             fi
           done
+          # Set git user for commit
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
           # Add, commit, and push only changes
           git add releases manifest.json README.md
           git diff --cached --quiet || git commit -m "Publish plugin zips, manifest, and README.md [skip ci]"
