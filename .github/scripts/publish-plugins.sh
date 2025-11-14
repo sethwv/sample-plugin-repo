@@ -189,9 +189,10 @@ for plugin_dir in plugins/*/; do
     latest_url="https://github.com/${GITHUB_REPOSITORY}/raw/$RELEASES_BRANCH/releases/${plugin_name}/${plugin_name}-latest.zip"
     
     # Get list of versioned zip objects with version, URL, and metadata
+    # Sort by semantic version (descending) to ensure latest is first
     versioned_zips="[]"
     latest_metadata="{}"
-    for zipfile in $(ls -1t "releases/$plugin_name/${plugin_name}"-*.zip 2>/dev/null | grep -v latest); do
+    for zipfile in $(ls -1 "releases/$plugin_name/${plugin_name}"-*.zip 2>/dev/null | grep -v latest | sort -t- -k2 -V -r); do
       zip_basename=$(basename "$zipfile")
       # Extract version from filename (e.g., plugin-name-1.0.0.zip -> 1.0.0)
       zip_version=$(echo "$zip_basename" | sed "s/${plugin_name}-\(.*\)\.zip/\1/")
