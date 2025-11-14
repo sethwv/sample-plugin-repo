@@ -1,6 +1,6 @@
 {
   "name": "cool-new-plugin",
-  "version": "0.0.2",
+  "version": "0.1.0",
   "owner": "sethwv",
   "maintainers": [
     "sethwv-alt"
@@ -8,6 +8,16 @@
   "description": "A cool description",
   "latest_url": "https://github.com/sethwv/sample-plugin-repo/raw/releases/releases/cool-new-plugin/cool-new-plugin-latest.zip",
   "versions": [
+    {
+      "version": "0.1.0",
+      "commit_sha": "d16817f930405e30dfe5197e470e1fd9b13773ef",
+      "commit_sha_short": "d16817f",
+      "build_timestamp": "2025-11-14T14:46:09Z",
+      "last_updated": "2025-11-14T09:45:54-05:00",
+      "checksum_md5": "53ff287701168c37e3309aab48558b74",
+      "checksum_sha256": "3ad8fe2572b967b53096e0b2b09e1cf035ffcfe60fc3a6effb9a29deda6e3631",
+      "url": "https://github.com/sethwv/sample-plugin-repo/raw/releases/releases/cool-new-plugin/cool-new-plugin-0.1.0.zip"
+    },
     {
       "version": "0.0.2",
       "commit_sha": "866706a56c93eb9765855b515c992b405ef77c56",
@@ -19,21 +29,21 @@
       "url": "https://github.com/sethwv/sample-plugin-repo/raw/releases/releases/cool-new-plugin/cool-new-plugin-0.0.2.zip"
     }
   ],
-  "last_updated": "2025-11-14T08:21:08-05:00",
+  "last_updated": "2025-11-14T09:45:54-05:00",
   "latest": {
-    "version": "0.0.2",
-    "commit_sha": "866706a56c93eb9765855b515c992b405ef77c56",
-    "commit_sha_short": "866706a",
-    "build_timestamp": "2025-11-14T14:37:16Z",
-    "last_updated": "2025-11-14T08:21:08-05:00",
-    "checksum_md5": "343bca976f0b160ad8fb2c8a835f87ad",
-    "checksum_sha256": "f0a6890428ea78d399c8461c154064c6370c25b4f559225ce54f8f7cb59dc892",
+    "version": "0.1.0",
+    "commit_sha": "d16817f930405e30dfe5197e470e1fd9b13773ef",
+    "commit_sha_short": "d16817f",
+    "build_timestamp": "2025-11-14T14:46:09Z",
+    "last_updated": "2025-11-14T09:45:54-05:00",
+    "checksum_md5": "53ff287701168c37e3309aab48558b74",
+    "checksum_sha256": "3ad8fe2572b967b53096e0b2b09e1cf035ffcfe60fc3a6effb9a29deda6e3631",
     "latest_url": "https://github.com/sethwv/sample-plugin-repo/raw/releases/releases/cool-new-plugin/cool-new-plugin-latest.zip",
-    "url": "https://github.com/sethwv/sample-plugin-repo/raw/releases/releases/cool-new-plugin/cool-new-plugin-0.0.2.zip"
+    "url": "https://github.com/sethwv/sample-plugin-repo/raw/releases/releases/cool-new-plugin/cool-new-plugin-0.1.0.zip"
   },
-  "latest_commit_sha": "866706a56c93eb9765855b515c992b405ef77c56",
-  "latest_commit_sha_short": "866706a",
-  "latest_build_timestamp": "2025-11-14T14:37:16Z",
-  "latest_checksum_md5": "343bca976f0b160ad8fb2c8a835f87ad",
-  "latest_checksum_sha256": "f0a6890428ea78d399c8461c154064c6370c25b4f559225ce54f8f7cb59dc892"
+  "latest_commit_sha": "d16817f930405e30dfe5197e470e1fd9b13773ef",
+  "latest_commit_sha_short": "d16817f",
+  "latest_build_timestamp": "2025-11-14T14:46:09Z",
+  "latest_checksum_md5": "53ff287701168c37e3309aab48558b74",
+  "latest_checksum_sha256": "3ad8fe2572b967b53096e0b2b09e1cf035ffcfe60fc3a6effb9a29deda6e3631"
 }

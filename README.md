@@ -12,23 +12,23 @@ This branch contains all published plugin releases with automated builds and met
 
 | Plugin | Version | Owner | Description |
 |--------|---------|-------|-------------|
-| [`cool-new-plugin`](#cool-new-plugin) | `0.0.2` | sethwv | A cool description |
+| [`cool-new-plugin`](#cool-new-plugin) | `0.1.0` | sethwv | A cool description |
 | [`sample`](#sample) | `1.3.2` | sethwv | A new short description |
 
 ---
 
 ### [cool-new-plugin](https://github.com/sethwv/sample-plugin-repo/blob/main/plugins/cool-new-plugin/README.md)
 
-**Version:** `0.0.2` | **Owner:** sethwv | **Last Updated:** 2025-11-14T08:21:08-05:00
+**Version:** `0.1.0` | **Owner:** sethwv | **Last Updated:** 2025-11-14T09:45:54-05:00
 
 A cool description
 
 **📥 Downloads:**
-- [Latest Release (`0.0.2`)](`releases/cool-new-plugin/cool-new-plugin-latest.zip`](https://github.com/sethwv/sample-plugin-repo/raw/releases/releases/cool-new-plugin/cool-new-plugin-latest.zip))
-- [All Versions (1 available)](./releases/cool-new-plugin)
+- [Latest Release (`0.1.0`)](`releases/cool-new-plugin/cool-new-plugin-latest.zip`](https://github.com/sethwv/sample-plugin-repo/raw/releases/releases/cool-new-plugin/cool-new-plugin-latest.zip))
+- [All Versions (2 available)](./releases/cool-new-plugin)
 
 
-**👥 Maintainers:** sethwv-alt | **📂 Source:** [Browse](https://github.com/sethwv/sample-plugin-repo/tree/main/plugins/cool-new-plugin) | **📝 Last Change:** [`866706a`](https://github.com/sethwv/sample-plugin-repo/commit/866706a56c93eb9765855b515c992b405ef77c56)
+**👥 Maintainers:** sethwv-alt | **📂 Source:** [Browse](https://github.com/sethwv/sample-plugin-repo/tree/main/plugins/cool-new-plugin) | **📝 Last Change:** [`d16817f`](https://github.com/sethwv/sample-plugin-repo/commit/d16817f930405e30dfe5197e470e1fd9b13773ef)
 
 ---
 
@@ -64,4 +64,4 @@ The manifest includes:
 
 ---
 
-*Last updated: 2025-11-14 14:45:14 UTC*
+*Last updated: 2025-11-14 14:46:09 UTC*
