@@ -1,3 +1,5 @@
+← [Back to All Plugins](../../)
+
 # [cool-new-plugin](https://github.com/sethwv/sample-plugin-repo/blob/main/plugins/cool-new-plugin/README.md)
 
 A cool description

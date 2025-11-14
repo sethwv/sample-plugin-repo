@@ -1,3 +1,5 @@
+← [Back to All Plugins](../../)
+
 # [sample](https://github.com/sethwv/sample-plugin-repo/blob/main/plugins/sample/README.md)
 
 A new short description
