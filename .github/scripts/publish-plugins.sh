@@ -61,6 +61,7 @@ mkdir -p releases
 
 # Build plugin ZIPs
 echo "🗜️  Building plugin ZIPs..."
+changed_plugins=()
 for plugin_dir in plugins/*/; do
   plugin_name=$(basename "$plugin_dir")
   version=$(jq -r '.version' "$plugin_dir/plugin.json")
@@ -79,6 +80,9 @@ for plugin_dir in plugins/*/; do
   fi
   
   echo "  - $plugin_name v$version (building)"
+  
+  # Track this as a changed plugin
+  changed_plugins+=("$plugin_name@$version")
   
   # Get commit SHA for this plugin from source branch
   commit_sha=$(git log -1 --format=%H origin/$SOURCE_BRANCH -- "$plugin_dir")
@@ -518,22 +522,6 @@ git add releases metadata manifest.json README.md
 if git diff --cached --quiet; then
   echo "✅ No changes to commit"
 else
-  # Collect plugin changes for commit message
-  changed_plugins=()
-  for plugin_dir in plugins/*/; do
-    # Skip if no plugins exist (glob didn't match)
-    [[ ! -d "$plugin_dir" ]] && continue
-    
-    plugin_name=$(basename "$plugin_dir")
-    plugin_file="$plugin_dir/plugin.json"
-    
-    # Skip if plugin.json doesn't exist
-    [[ ! -f "$plugin_file" ]] && continue
-    
-    version=$(jq -r '.version' "$plugin_file")
-    changed_plugins+=("$plugin_name@$version")
-  done
-  
   # Get source commit info
   source_commit=$(git rev-parse --short origin/$SOURCE_BRANCH)
   
