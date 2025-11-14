@@ -10,125 +10,50 @@ on:
     paths:
       - 'plugins/**'
       - '.github/workflows/publish-plugins.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: publish-plugins
+  cancel-in-progress: false
 
 jobs:
   publish:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Checkout main
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Create releases folder
-        run: mkdir -p releases
+      - name: Make publish script executable
+        run: chmod +x .github/scripts/publish-plugins.sh
 
-      - name: Zip all plugins
-        run: |
-          for plugin_dir in plugins/*/; do
-            plugin_name=$(basename "$plugin_dir")
-            zip -r "releases/$plugin_name.zip" "$plugin_dir"
-          done
-
-      # The above steps are replaced by the next step
-
-      - name: Publish to releases branch (orphan, clean, generate, commit)
+      - name: Publish plugins to releases branch
+        id: publish
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: .github/scripts/publish-plugins.sh main 2>&1 | tee publish.log
+
+      - name: Generate job summary
+        if: always()
         run: |
-          set -ex
-          git config --local user.name "github-actions[bot]"
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          # Clone the repo fresh for artifact branch work
-          TMPDIR=$(mktemp -d)
-          git clone --no-checkout "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$TMPDIR/plugins-branch"
-          cd "$TMPDIR/plugins-branch"
-          # Set git user for all commits (including orphan branch)
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          # Check if releases branch exists on remote
-          if git ls-remote --exit-code --heads origin releases; then
-            git checkout releases
-            git pull origin releases || true
-          else
-            git checkout --orphan releases
-            git rm -rf .
-            git commit --allow-empty -m "Initial empty commit on releases branch"
-          fi
-          # Do not remove plugin subfolders in releases/; just overwrite or add new zips as needed
-          rm -f manifest.json README.md
-          # Fetch full main history and copy source files from main branch for build
-          git fetch origin main
-          git checkout origin/main -- plugins
-          # Generate releases zips in subfolders, with latest and versioned zips
-          mkdir -p releases
-          for plugin_dir in plugins/*/; do
-            plugin_name=$(basename "$plugin_dir")
-            version=$(jq -r '.version' "$plugin_dir/plugin.json")
-            mkdir -p "releases/$plugin_name"
-            zip -r "releases/$plugin_name/${plugin_name}-${version}.zip" "$plugin_dir"
-            cp "releases/$plugin_name/${plugin_name}-${version}.zip" "releases/$plugin_name/${plugin_name}-latest.zip"
-          done
-          # Keep only the 10 most recent versioned zips (excluding latest) for each plugin
-          for plugin_dir in plugins/*/; do
-            plugin_name=$(basename "$plugin_dir")
-            zip_dir="releases/$plugin_name"
-            ls -1t "$zip_dir"/${plugin_name}-*.zip 2>/dev/null | grep -v "${plugin_name}-latest.zip" | awk 'NR>10' | xargs -r rm -f
-          done
-          # Generate manifest.json with links to latest and most recent versioned zip
-          MANIFEST="manifest.json"
-          echo '{ "plugins": [' > tmp_manifest.json
-          FIRST=true
-          for plugin_dir in plugins/*/; do
-            plugin_file="$plugin_dir/plugin.json"
-            if [ -f "$plugin_file" ]; then
-              NAME=$(jq -r '.name' "$plugin_file")
-              DATE=$(git log -1 --format=%cI origin/main -- "$plugin_dir")
-              # Find all versioned zips (excluding latest)
-              versioned_zips_list=$(ls -1t releases/$NAME/${NAME}-*.zip 2>/dev/null | grep -v latest | xargs -n1 basename)
-              latest_url="https://github.com/${GITHUB_REPOSITORY}/raw/releases/releases/${NAME}/${NAME}-latest.zip"
-              versioned_zips_json="[]"
-              for zipfile in $versioned_zips_list; do
-                url="https://github.com/${GITHUB_REPOSITORY}/raw/releases/releases/${NAME}/$zipfile"
-                versioned_zips_json=$(jq --arg url "$url" '. + [$url]' <<< "$versioned_zips_json")
-              done
-              PLUGIN_JSON=$(jq --arg last_updated "$DATE" --arg latest_url "$latest_url" --argjson versioned_zips "$versioned_zips_json" '. + {last_updated: $last_updated, latest_url: $latest_url, versioned_zips: $versioned_zips}' "$plugin_file")
-              if [ "$FIRST" = true ]; then
-                FIRST=false
-              else
-                echo "," >> tmp_manifest.json
+          echo "## Published Plugins" >> $GITHUB_STEP_SUMMARY
+          if [ -f publish.log ]; then
+            if grep -q "Successfully published" publish.log; then
+              echo "✅ Publishing completed successfully" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              # Extract plugin info from the temporary repo if available
+              if [ -d /tmp/tmp.*/repo ]; then
+                REPO_DIR=$(find /tmp -maxdepth 1 -name "tmp.*" -type d 2>/dev/null | head -1)/repo
+                if [ -f "$REPO_DIR/manifest.json" ]; then
+                  cat "$REPO_DIR/manifest.json" | jq -r '.plugins[] | "- **\(.name)** v\(.version)"' >> $GITHUB_STEP_SUMMARY
+                fi
               fi
-              echo "$PLUGIN_JSON" >> tmp_manifest.json
+            else
+              echo "❌ Publishing failed" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "See logs for details." >> $GITHUB_STEP_SUMMARY
             fi
-          done
-          echo "]}" >> tmp_manifest.json
-          cat tmp_manifest.json | jq '.' > $MANIFEST
-          # Generate README.md
-          MD_FILE="README.md"
-          BRANCH="releases"
-          echo "# Plugin List" > $MD_FILE
-          echo "" >> $MD_FILE
-          echo "| Name | Version | Owner | Maintainers | Update Date | ZIP |" >> $MD_FILE
-          echo "|------|--------|-------|------------|-------------|-----|" >> $MD_FILE
-          for plugin_dir in plugins/*/; do
-            PLUGIN_JSON="$plugin_dir/plugin.json"
-            if [ -f "$PLUGIN_JSON" ]; then
-              NAME=$(jq -r '.name' "$PLUGIN_JSON")
-              VERSION=$(jq -r '.version' "$PLUGIN_JSON")
-              OWNER=$(jq -r '.owner' "$PLUGIN_JSON")
-              MAINTAINERS=$(jq -r '[.maintainers[]?] | join(", ")' "$PLUGIN_JSON")
-              DATE=$(git log -1 --format=%cI origin/main -- "$plugin_dir")
-              ZIP_URL="https://github.com/${GITHUB_REPOSITORY}/raw/${BRANCH}/releases/${NAME}/${NAME}-latest.zip"
-              echo "| $NAME | $VERSION | $OWNER | $MAINTAINERS | $DATE | [ZIP]($ZIP_URL) |" >> $MD_FILE
-            fi
-          done
-          # Set git user for commit
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          # Remove plugins/ from workspace and git index before committing
-          rm -rf plugins
-          git rm -rf --cached plugins || true
-          # Add, commit, and push only changes
-          git add releases manifest.json README.md
-          git diff --cached --quiet || git commit -m "Publish plugin zips, manifest, and README.md [skip ci]"
-          git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" releases
+          fi

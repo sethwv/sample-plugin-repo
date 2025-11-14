@@ -1,0 +1,120 @@
+name: Validate & Enforce Plugin Ownership
+
+permissions:
+  contents: write
+  pull-requests: write
+
+on:
+  pull_request:
+    types:
+      - opened
+      - edited
+      - synchronize
+      - ready_for_review
+    paths:
+      - 'plugins/**'
+      - '.github/workflows/publish-plugins.yml'
+  workflow_dispatch:
+
+jobs:
+  draft-notice:
+    if: ${{ github.event.pull_request.draft == true }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Authenticate GH CLI
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh auth status
+
+      - name: Post draft notice
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          COMMENT="<!--PLUGIN_VALIDATION_DRAFT_NOTICE-->"
+          COMMENT+=$'\n'"⚠️ This PR is currently a draft. Plugin validation will run once the PR is marked ready for review."
+          EXISTING_COMMENT_ID=$(gh pr view $PR_NUMBER --json comments --jq '.comments[] | select(.author.login=="github-actions[bot]") | select(.body | contains("<!--PLUGIN_VALIDATION_DRAFT_NOTICE-->")) | .id')
+          if [ -n "$EXISTING_COMMENT_ID" ]; then
+            gh pr comment edit $EXISTING_COMMENT_ID --body "$COMMENT"
+          else
+            gh pr comment $PR_NUMBER --body "$COMMENT"
+          fi
+
+  validate-and-comment:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Fail if PR is draft
+        if: ${{ github.event.pull_request.draft == true }}
+        run: |
+          echo "❌ PR is a draft — validation cannot run on draft PRs"
+          exit 1
+
+      - name: Checkout PR with full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.ref }}
+
+      - name: Fetch base branch fully
+        run: git fetch origin ${{ github.event.pull_request.base.ref }}:refs/remotes/origin/base
+
+      - name: Authenticate GH CLI
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh auth status
+
+      - name: Make validation script executable
+        run: chmod +x .github/scripts/validate-plugin.sh
+
+      - name: Run plugin validation
+        id: validate
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          .github/scripts/validate-plugin.sh \
+            "${{ github.event.pull_request.number }}" \
+            "${{ github.actor }}" \
+            "${{ github.event.pull_request.base.ref }}" \
+            > pr_comment.txt
+        continue-on-error: true
+
+      - name: Save validation result
+        if: always()
+        run: echo "${{ steps.validate.outcome }}" > validation_outcome.txt
+
+      - name: Post or update PR comment
+        if: always()
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ -f pr_comment.txt ]; then
+            COMMENT=$(cat pr_comment.txt)
+            # Check if a validation comment already exists
+            EXISTING_COMMENT_ID=$(gh pr view $PR_NUMBER --json comments --jq '.comments[] | select(.author.login=="github-actions[bot]") | select(.body | contains("<!--PLUGIN_VALIDATION_COMMENT-->")) | .id')
+            if [ -n "$EXISTING_COMMENT_ID" ]; then
+              # Update existing comment
+              gh api "repos/${{ github.repository }}/issues/comments/$EXISTING_COMMENT_ID" -X PATCH -f body="$COMMENT"
+            else
+              # Post new comment
+              gh pr comment $PR_NUMBER --body "$COMMENT"
+            fi
+          fi
+        continue-on-error: true
+
+      - name: Fail workflow if validation failed
+        if: always()
+        run: |
+          OUTCOME=$(cat validation_outcome.txt)
+          if [ "$OUTCOME" != "success" ]; then
+            echo "::error::Plugin validation failed. See PR comment for details."
+            exit 1
+          fi
