@@ -134,7 +134,7 @@ for plugin_dir in plugins/*/; do
   owner=$(jq -r '.owner' "$plugin_file")
   
   {
-    echo "# $name"
+    echo "# [$name](https://github.com/${GITHUB_REPOSITORY}/blob/$SOURCE_BRANCH/plugins/${plugin_name}/README.md)"
     echo ""
     echo "$description"
     echo ""
@@ -201,7 +201,7 @@ for plugin_dir in plugins/*/; do
         # Format timestamp to date only
         build_date=$(echo "$build_timestamp" | cut -d'T' -f1)
         
-        echo "| \`$version\` | [Download]($zip_basename) | $build_date | [\`$commit_sha_short\`](https://github.com/${GITHUB_REPOSITORY}/commit/${commit_sha}) | \`${checksum_md5:0:8}...\` |"
+        echo "| \`$version\` | [Download]($zip_basename) | $build_date | [\`$commit_sha_short\`](https://github.com/${GITHUB_REPOSITORY}/commit/${commit_sha}) | \`$checksum_md5\` |"
       else
         echo "| \`$version\` | [Download]($zip_basename) | - | - | - |"
       fi
