@@ -95,44 +95,6 @@
       "latest_build_timestamp": "2025-11-14T14:39:19Z",
       "latest_checksum_md5": "9fdd0eeef6a45f1ff65a5b0dae48aa51",
       "latest_checksum_sha256": "2415f469de89cf0e3e5cde1d84281aaa27b4791b9780a20a1dbb106dcc95f295"
-    },
-    {
-      "name": "secret-plugin",
-      "version": "9.3.1",
-      "owner": "sethwv",
-      "maintainers": [],
-      "description": "A secret description",
-      "unlisted": true,
-      "latest_url": "https://github.com/sethwv/sample-plugin-repo/raw/releases/releases/secret-plugin/secret-plugin-latest.zip",
-      "versions": [
-        {
-          "version": "9.3.1",
-          "commit_sha": "86d6ebbb5b98cada5981b56fa70b7dec101a4a61",
-          "commit_sha_short": "86d6ebb",
-          "build_timestamp": "2025-11-14T14:37:16Z",
-          "last_updated": "2025-11-14T09:35:23-05:00",
-          "checksum_md5": "e06d28792fa316ab8c6c5cc6e57cb8ed",
-          "checksum_sha256": "05e563a9ede0f34b8704c577cd74e8a9921f078b7085df47485d02b4bd6592a5",
-          "url": "https://github.com/sethwv/sample-plugin-repo/raw/releases/releases/secret-plugin/secret-plugin-9.3.1.zip"
-        }
-      ],
-      "last_updated": "2025-11-14T09:35:23-05:00",
-      "latest": {
-        "version": "9.3.1",
-        "commit_sha": "86d6ebbb5b98cada5981b56fa70b7dec101a4a61",
-        "commit_sha_short": "86d6ebb",
-        "build_timestamp": "2025-11-14T14:37:16Z",
-        "last_updated": "2025-11-14T09:35:23-05:00",
-        "checksum_md5": "e06d28792fa316ab8c6c5cc6e57cb8ed",
-        "checksum_sha256": "05e563a9ede0f34b8704c577cd74e8a9921f078b7085df47485d02b4bd6592a5",
-        "latest_url": "https://github.com/sethwv/sample-plugin-repo/raw/releases/releases/secret-plugin/secret-plugin-latest.zip",
-        "url": "https://github.com/sethwv/sample-plugin-repo/raw/releases/releases/secret-plugin/secret-plugin-9.3.1.zip"
-      },
-      "latest_commit_sha": "86d6ebbb5b98cada5981b56fa70b7dec101a4a61",
-      "latest_commit_sha_short": "86d6ebb",
-      "latest_build_timestamp": "2025-11-14T14:37:16Z",
-      "latest_checksum_md5": "e06d28792fa316ab8c6c5cc6e57cb8ed",
-      "latest_checksum_sha256": "05e563a9ede0f34b8704c577cd74e8a9921f078b7085df47485d02b4bd6592a5"
     }
   ]
 }
