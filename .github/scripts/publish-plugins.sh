@@ -120,6 +120,104 @@ for plugin_dir in plugins/*/; do
   cp "$zip_path" "releases/$plugin_name/${plugin_name}-latest.zip"
 done
 
+# Generate per-plugin READMEs
+echo "📝 Generating per-plugin READMEs..."
+for plugin_dir in plugins/*/; do
+  [[ ! -d "$plugin_dir" ]] && continue
+  plugin_name=$(basename "$plugin_dir")
+  plugin_file="$plugin_dir/plugin.json"
+  
+  [[ ! -f "$plugin_file" ]] && continue
+  
+  name=$(jq -r '.name' "$plugin_file")
+  description=$(jq -r '.description' "$plugin_file")
+  owner=$(jq -r '.owner' "$plugin_file")
+  
+  {
+    echo "# $name"
+    echo ""
+    echo "$description"
+    echo ""
+    echo "**Owner:** $owner"
+    echo ""
+    echo "## 📥 Downloads"
+    echo ""
+    echo "### Latest Release"
+    echo ""
+    
+    # Get latest version info
+    latest_zip="releases/$plugin_name/${plugin_name}-latest.zip"
+    if [[ -f "$latest_zip" ]]; then
+      # Find the actual latest version by sorting
+      latest_versioned=$(ls -1 "releases/$plugin_name/${plugin_name}"-*.zip 2>/dev/null | grep -v latest | sort -t- -k2 -V -r | head -1)
+      if [[ -n "$latest_versioned" ]]; then
+        zip_basename=$(basename "$latest_versioned")
+        latest_version=$(echo "$zip_basename" | sed "s/${plugin_name}-\(.*\)\.zip/\1/")
+        metadata_file="metadata/$plugin_name/${plugin_name}-${latest_version}.json"
+        
+        echo "**Version:** \`$latest_version\`"
+        echo ""
+        
+        if [[ -f "$metadata_file" ]]; then
+          commit_sha=$(jq -r '.commit_sha' "$metadata_file")
+          commit_sha_short=$(jq -r '.commit_sha_short' "$metadata_file")
+          build_timestamp=$(jq -r '.build_timestamp' "$metadata_file")
+          checksum_md5=$(jq -r '.checksum_md5' "$metadata_file")
+          checksum_sha256=$(jq -r '.checksum_sha256' "$metadata_file")
+          
+          echo "- **Download:** [\`${plugin_name}-latest.zip\`](${plugin_name}-latest.zip)"
+          echo "- **Built:** $build_timestamp"
+          echo "- **Source Commit:** [\`$commit_sha_short\`](https://github.com/${GITHUB_REPOSITORY}/commit/${commit_sha})"
+          echo ""
+          echo "**Checksums:**"
+          echo "\`\`\`"
+          echo "MD5:    $checksum_md5"
+          echo "SHA256: $checksum_sha256"
+          echo "\`\`\`"
+        else
+          echo "- **Download:** [\`${plugin_name}-latest.zip\`](${plugin_name}-latest.zip)"
+        fi
+      fi
+    fi
+    
+    echo ""
+    echo "### All Versions"
+    echo ""
+    echo "| Version | Download | Built | Commit | MD5 Checksum |"
+    echo "|---------|----------|-------|--------|--------------|"
+    
+    # List all versions sorted by semantic version (newest first)
+    for zipfile in $(ls -1 "releases/$plugin_name/${plugin_name}"-*.zip 2>/dev/null | grep -v latest | sort -t- -k2 -V -r); do
+      zip_basename=$(basename "$zipfile")
+      version=$(echo "$zip_basename" | sed "s/${plugin_name}-\(.*\)\.zip/\1/")
+      metadata_file="metadata/$plugin_name/${plugin_name}-${version}.json"
+      
+      if [[ -f "$metadata_file" ]]; then
+        commit_sha_short=$(jq -r '.commit_sha_short' "$metadata_file")
+        commit_sha=$(jq -r '.commit_sha' "$metadata_file")
+        build_timestamp=$(jq -r '.build_timestamp' "$metadata_file")
+        checksum_md5=$(jq -r '.checksum_md5' "$metadata_file")
+        
+        # Format timestamp to date only
+        build_date=$(echo "$build_timestamp" | cut -d'T' -f1)
+        
+        echo "| \`$version\` | [Download]($zip_basename) | $build_date | [\`$commit_sha_short\`](https://github.com/${GITHUB_REPOSITORY}/commit/${commit_sha}) | \`${checksum_md5:0:8}...\` |"
+      else
+        echo "| \`$version\` | [Download]($zip_basename) | - | - | - |"
+      fi
+    done
+    
+    echo ""
+    echo "---"
+    echo ""
+    echo "**📂 Source:** [Browse Plugin](https://github.com/${GITHUB_REPOSITORY}/tree/$SOURCE_BRANCH/plugins/${plugin_name})"
+    echo ""
+    echo "**📋 Metadata:** [View full metadata](../../metadata/${plugin_name}/manifest.json)"
+  } > "releases/$plugin_name/README.md"
+  
+  echo "  Generated README for $plugin_name"
+done
+
 # Build list of current plugin names
 current_plugins=()
 for plugin_dir in plugins/*/; do
