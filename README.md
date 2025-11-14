@@ -13,7 +13,7 @@ This branch contains all published plugin releases with automated builds and met
 | Plugin | Version | Owner | Description |
 |--------|---------|-------|-------------|
 | [`cool-new-plugin`](#cool-new-plugin) | `0.0.2` | sethwv | A cool description |
-| [`sample`](#sample) ⚠️ | `1.3.1` | sethwv | ~~A short description~~ |
+| [`sample`](#sample) | `1.3.2` | sethwv | A new short description |
 
 ---
 
@@ -32,23 +32,18 @@ A cool description
 
 ---
 
+### [sample](https://github.com/sethwv/sample-plugin-repo/blob/main/plugins/sample/README.md)
 
-## ⚠️ Deprecated Plugins
+**Version:** `1.3.2` | **Owner:** sethwv | **Last Updated:** 2025-11-14T09:39:09-05:00
 
-These plugins are deprecated and may be removed in the future without notice. They may not work in current or future versions of the application. Use at your own risk.
-
-### ⚠️ [sample](https://github.com/sethwv/sample-plugin-repo/blob/main/plugins/sample/README.md)
-
-**Version:** `1.3.1` | **Owner:** sethwv | **Last Updated:** 2025-11-14T09:35:23-05:00
-
-A short description
+A new short description
 
 **📥 Downloads:**
-- [Latest Release (`1.3.1`)](`releases/sample/sample-latest.zip`](https://github.com/sethwv/sample-plugin-repo/raw/releases/releases/sample/sample-latest.zip))
-- [All Versions (1 available)](./releases/sample)
+- [Latest Release (`1.3.2`)](`releases/sample/sample-latest.zip`](https://github.com/sethwv/sample-plugin-repo/raw/releases/releases/sample/sample-latest.zip))
+- [All Versions (2 available)](./releases/sample)
 
 
-**📂 Source:** [Browse](https://github.com/sethwv/sample-plugin-repo/tree/main/plugins/sample) | **📝 Last Change:** [`86d6ebb`](https://github.com/sethwv/sample-plugin-repo/commit/86d6ebbb5b98cada5981b56fa70b7dec101a4a61)
+**📂 Source:** [Browse](https://github.com/sethwv/sample-plugin-repo/tree/main/plugins/sample) | **📝 Last Change:** [`2cc8927`](https://github.com/sethwv/sample-plugin-repo/commit/2cc8927f09d6a1bdf6cdd024c174cd8080f3c2d8)
 
 ---
 
@@ -69,4 +64,4 @@ The manifest includes:
 
 ---
 
-*Last updated: 2025-11-14 14:38:23 UTC*
+*Last updated: 2025-11-14 14:39:19 UTC*
