@@ -1,0 +1,119 @@
+{
+  "plugins": [
+    {
+      "name": "cool-new-plugin",
+      "version": "0.0.2",
+      "owner": "sethwv",
+      "maintainers": [
+        "sethwv-alt"
+      ],
+      "description": "A cool description",
+      "latest_url": "https://github.com/sethwv/sample-plugin-repo/raw/releases/releases/cool-new-plugin/cool-new-plugin-latest.zip",
+      "versions": [
+        {
+          "version": "0.0.2",
+          "commit_sha": "866706a56c93eb9765855b515c992b405ef77c56",
+          "commit_sha_short": "866706a",
+          "build_timestamp": "2025-11-14T14:37:16Z",
+          "last_updated": "2025-11-14T08:21:08-05:00",
+          "checksum_md5": "343bca976f0b160ad8fb2c8a835f87ad",
+          "checksum_sha256": "f0a6890428ea78d399c8461c154064c6370c25b4f559225ce54f8f7cb59dc892",
+          "url": "https://github.com/sethwv/sample-plugin-repo/raw/releases/releases/cool-new-plugin/cool-new-plugin-0.0.2.zip"
+        }
+      ],
+      "last_updated": "2025-11-14T08:21:08-05:00",
+      "latest": {
+        "version": "0.0.2",
+        "commit_sha": "866706a56c93eb9765855b515c992b405ef77c56",
+        "commit_sha_short": "866706a",
+        "build_timestamp": "2025-11-14T14:37:16Z",
+        "last_updated": "2025-11-14T08:21:08-05:00",
+        "checksum_md5": "343bca976f0b160ad8fb2c8a835f87ad",
+        "checksum_sha256": "f0a6890428ea78d399c8461c154064c6370c25b4f559225ce54f8f7cb59dc892",
+        "latest_url": "https://github.com/sethwv/sample-plugin-repo/raw/releases/releases/cool-new-plugin/cool-new-plugin-latest.zip",
+        "url": "https://github.com/sethwv/sample-plugin-repo/raw/releases/releases/cool-new-plugin/cool-new-plugin-0.0.2.zip"
+      },
+      "latest_commit_sha": "866706a56c93eb9765855b515c992b405ef77c56",
+      "latest_commit_sha_short": "866706a",
+      "latest_build_timestamp": "2025-11-14T14:37:16Z",
+      "latest_checksum_md5": "343bca976f0b160ad8fb2c8a835f87ad",
+      "latest_checksum_sha256": "f0a6890428ea78d399c8461c154064c6370c25b4f559225ce54f8f7cb59dc892"
+    },
+    {
+      "name": "sample",
+      "version": "1.3.1",
+      "owner": "sethwv",
+      "maintainers": [],
+      "description": "A short description",
+      "deprecated": true,
+      "latest_url": "https://github.com/sethwv/sample-plugin-repo/raw/releases/releases/sample/sample-latest.zip",
+      "versions": [
+        {
+          "version": "1.3.1",
+          "commit_sha": "86d6ebbb5b98cada5981b56fa70b7dec101a4a61",
+          "commit_sha_short": "86d6ebb",
+          "build_timestamp": "2025-11-14T14:37:16Z",
+          "last_updated": "2025-11-14T09:35:23-05:00",
+          "checksum_md5": "f5368a76bbe073dcad885aa46b873eb1",
+          "checksum_sha256": "13129b96dd36a6c8a0a70a6370eec65c4fcdffc663e85e9f5bbd3dbed6941951",
+          "url": "https://github.com/sethwv/sample-plugin-repo/raw/releases/releases/sample/sample-1.3.1.zip"
+        }
+      ],
+      "last_updated": "2025-11-14T09:35:23-05:00",
+      "latest": {
+        "version": "1.3.1",
+        "commit_sha": "86d6ebbb5b98cada5981b56fa70b7dec101a4a61",
+        "commit_sha_short": "86d6ebb",
+        "build_timestamp": "2025-11-14T14:37:16Z",
+        "last_updated": "2025-11-14T09:35:23-05:00",
+        "checksum_md5": "f5368a76bbe073dcad885aa46b873eb1",
+        "checksum_sha256": "13129b96dd36a6c8a0a70a6370eec65c4fcdffc663e85e9f5bbd3dbed6941951",
+        "latest_url": "https://github.com/sethwv/sample-plugin-repo/raw/releases/releases/sample/sample-latest.zip",
+        "url": "https://github.com/sethwv/sample-plugin-repo/raw/releases/releases/sample/sample-1.3.1.zip"
+      },
+      "latest_commit_sha": "86d6ebbb5b98cada5981b56fa70b7dec101a4a61",
+      "latest_commit_sha_short": "86d6ebb",
+      "latest_build_timestamp": "2025-11-14T14:37:16Z",
+      "latest_checksum_md5": "f5368a76bbe073dcad885aa46b873eb1",
+      "latest_checksum_sha256": "13129b96dd36a6c8a0a70a6370eec65c4fcdffc663e85e9f5bbd3dbed6941951"
+    },
+    {
+      "name": "secret-plugin",
+      "version": "9.3.1",
+      "owner": "sethwv",
+      "maintainers": [],
+      "description": "A secret description",
+      "unlisted": true,
+      "latest_url": "https://github.com/sethwv/sample-plugin-repo/raw/releases/releases/secret-plugin/secret-plugin-latest.zip",
+      "versions": [
+        {
+          "version": "9.3.1",
+          "commit_sha": "86d6ebbb5b98cada5981b56fa70b7dec101a4a61",
+          "commit_sha_short": "86d6ebb",
+          "build_timestamp": "2025-11-14T14:37:16Z",
+          "last_updated": "2025-11-14T09:35:23-05:00",
+          "checksum_md5": "e06d28792fa316ab8c6c5cc6e57cb8ed",
+          "checksum_sha256": "05e563a9ede0f34b8704c577cd74e8a9921f078b7085df47485d02b4bd6592a5",
+          "url": "https://github.com/sethwv/sample-plugin-repo/raw/releases/releases/secret-plugin/secret-plugin-9.3.1.zip"
+        }
+      ],
+      "last_updated": "2025-11-14T09:35:23-05:00",
+      "latest": {
+        "version": "9.3.1",
+        "commit_sha": "86d6ebbb5b98cada5981b56fa70b7dec101a4a61",
+        "commit_sha_short": "86d6ebb",
+        "build_timestamp": "2025-11-14T14:37:16Z",
+        "last_updated": "2025-11-14T09:35:23-05:00",
+        "checksum_md5": "e06d28792fa316ab8c6c5cc6e57cb8ed",
+        "checksum_sha256": "05e563a9ede0f34b8704c577cd74e8a9921f078b7085df47485d02b4bd6592a5",
+        "latest_url": "https://github.com/sethwv/sample-plugin-repo/raw/releases/releases/secret-plugin/secret-plugin-latest.zip",
+        "url": "https://github.com/sethwv/sample-plugin-repo/raw/releases/releases/secret-plugin/secret-plugin-9.3.1.zip"
+      },
+      "latest_commit_sha": "86d6ebbb5b98cada5981b56fa70b7dec101a4a61",
+      "latest_commit_sha_short": "86d6ebb",
+      "latest_build_timestamp": "2025-11-14T14:37:16Z",
+      "latest_checksum_md5": "e06d28792fa316ab8c6c5cc6e57cb8ed",
+      "latest_checksum_sha256": "05e563a9ede0f34b8704c577cd74e8a9921f078b7085df47485d02b4bd6592a5"
+    }
+  ]
+}
