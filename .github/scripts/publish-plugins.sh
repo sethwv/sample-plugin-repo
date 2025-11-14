@@ -134,6 +134,8 @@ for plugin_dir in plugins/*/; do
   owner=$(jq -r '.owner' "$plugin_file")
   
   {
+    echo "← [Back to All Plugins](../../)"
+    echo ""
     echo "# [$name](https://github.com/${GITHUB_REPOSITORY}/blob/$SOURCE_BRANCH/plugins/${plugin_name}/README.md)"
     echo ""
     echo "$description"
