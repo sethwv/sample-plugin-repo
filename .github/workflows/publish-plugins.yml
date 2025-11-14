@@ -10,6 +10,7 @@ on:
     paths:
       - 'plugins/**'
       - '.github/workflows/publish-plugins.yml'
+      - '.github/scripts/publish-plugins.sh'
   workflow_dispatch:
 
 concurrency:

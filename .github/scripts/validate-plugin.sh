@@ -76,6 +76,16 @@ validate_plugin() {
   echo "### Plugin: \`$plugin_name\`"
   echo ""
   
+  # Validate folder name format (lowercase-kebab-case)
+  if [[ ! "$plugin_name" =~ ^[a-z0-9]+(-[a-z0-9]+)*$ ]]; then
+    echo "- ❌ Plugin folder name must be lowercase-kebab-case (lowercase letters, numbers, and hyphens only)"
+    echo "  Current: \`$plugin_name\`"
+    echo "  Example: \`my-plugin-name\`"
+    failed=1
+  else
+    echo "- ✅ Folder name format valid"
+  fi
+  
   # Check for plugin.json
   if [[ ! -f "$plugin_json" ]]; then
     echo "- ❌ plugin.json missing"
@@ -135,7 +145,7 @@ validate_plugin() {
     if version_greater_than "$VERSION" "$OLD_VERSION"; then
       echo "- ✅ Version bump valid (\`$OLD_VERSION\` → \`$VERSION\`)"
     else
-      echo "- ❌ Version must be incremented (currently \`$OLD_VERSION\`, got \`$VERSION\`)"
+      echo "- ❌ Version \`$VERSION\` must be greater than current version \`$OLD_VERSION\`"
       failed=1
     fi
   else
@@ -230,6 +240,9 @@ main() {
   
   # Print plugin information table
   if [[ -n "$all_tables" ]]; then
+    echo ""
+    echo "---"
+    echo ""
     echo ""
     echo "## Plugin Metadata"
     echo ""

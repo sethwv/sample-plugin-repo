@@ -11,10 +11,10 @@ on:
       - edited
       - synchronize
       - ready_for_review
-    paths:
-      - 'plugins/**'
-      - '.github/workflows/publish-plugins.yml'
-  workflow_dispatch:
+  #   paths:
+  #     - 'plugins/**'
+  #     - '.github/workflows/publish-plugins.yml'
+  # workflow_dispatch:
 
 jobs:
   draft-notice:
