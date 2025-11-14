@@ -120,9 +120,34 @@ for plugin_dir in plugins/*/; do
   cp "$zip_path" "releases/$plugin_name/${plugin_name}-latest.zip"
 done
 
+# Build list of current plugin names
+current_plugins=()
+for plugin_dir in plugins/*/; do
+  [[ ! -d "$plugin_dir" ]] && continue
+  plugin_name=$(basename "$plugin_dir")
+  current_plugins+=("$plugin_name")
+done
+
+# Clean up deleted plugins
+echo "🧹 Checking for deleted plugins..."
+if [[ -d "releases" ]]; then
+  for release_dir in releases/*/; do
+    [[ ! -d "$release_dir" ]] && continue
+    plugin_name=$(basename "$release_dir")
+    
+    # Check if this plugin still exists in source
+    if [[ ! -d "plugins/$plugin_name" ]]; then
+      echo "  Removing deleted plugin: $plugin_name"
+      rm -rf "$release_dir"
+      rm -rf "metadata/$plugin_name"
+    fi
+  done
+fi
+
 # Clean up old versioned ZIPs (keep only most recent N)
 echo "🧹 Cleaning up old versions..."
 for plugin_dir in plugins/*/; do
+  [[ ! -d "$plugin_dir" ]] && continue
   plugin_name=$(basename "$plugin_dir")
   zip_dir="releases/$plugin_name"
   metadata_dir="metadata/$plugin_name"
